@@ -1,0 +1,3 @@
+C:/Users/ASUS/OneDrive/Documents/3D graphics/codes/build/CMakeFiles/main.dir
+C:/Users/ASUS/OneDrive/Documents/3D graphics/codes/build/CMakeFiles/edit_cache.dir
+C:/Users/ASUS/OneDrive/Documents/3D graphics/codes/build/CMakeFiles/rebuild_cache.dir

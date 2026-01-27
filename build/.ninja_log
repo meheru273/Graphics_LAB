@@ -1,0 +1,15 @@
+# ninja log v7
+24	2484	7912199861343174	CMakeFiles/bulldozer.dir/opengl/glad.c.obj	f3072b1c2fb55c6f
+61	1455	7912221937501015	CMakeFiles/bulldozer.dir/projects/bulldozer/main.cpp.obj	c3391df419197b54
+1456	1630	7912221951444673	projects/bulldozer/bulldozer.exe	1815a5c231c9d1d6
+7	512	7912234047429059	build.ninja	dace66de0ea1a6d0
+7	512	7912234047399761	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
+45	1673	7912234186293132	CMakeFiles/aeroplane.dir/opengl/glad.c.obj	1f56f4244e372e77
+37	1783	7912234186218321	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
+1784	2017	7912234203669520	projects/aeroplane/aeroplane.exe	be1031abada46835
+44	1719	7912236808961094	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
+1721	2191	7912236825742730	projects/aeroplane/aeroplane.exe	be1031abada46835
+34	1108	7912239626518491	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
+1109	1280	7912239637268587	projects/aeroplane/aeroplane.exe	be1031abada46835
+11	1952	7912244388352068	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
+1953	2184	7912244407779173	projects/aeroplane/aeroplane.exe	be1031abada46835
