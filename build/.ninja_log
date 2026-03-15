@@ -1,15 +1,15 @@
 # ninja log v7
-24	2484	7912199861343174	CMakeFiles/bulldozer.dir/opengl/glad.c.obj	f3072b1c2fb55c6f
-61	1455	7912221937501015	CMakeFiles/bulldozer.dir/projects/bulldozer/main.cpp.obj	c3391df419197b54
-1456	1630	7912221951444673	projects/bulldozer/bulldozer.exe	1815a5c231c9d1d6
-7	512	7912234047429059	build.ninja	dace66de0ea1a6d0
-7	512	7912234047399761	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
-45	1673	7912234186293132	CMakeFiles/aeroplane.dir/opengl/glad.c.obj	1f56f4244e372e77
-37	1783	7912234186218321	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
-1784	2017	7912234203669520	projects/aeroplane/aeroplane.exe	be1031abada46835
-44	1719	7912236808961094	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
-1721	2191	7912236825742730	projects/aeroplane/aeroplane.exe	be1031abada46835
-34	1108	7912239626518491	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
-1109	1280	7912239637268587	projects/aeroplane/aeroplane.exe	be1031abada46835
-11	1952	7912244388352068	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	e1e6211a3121c885
-1953	2184	7912244407779173	projects/aeroplane/aeroplane.exe	be1031abada46835
+19	1644	7930983596886325	CMakeFiles/codes.dir/projects/codes/stb_image.cpp.obj	476fc2e407e949bb
+73	1706	7930997427819664	CMakeFiles/codes.dir/projects/codes/main.cpp.obj	3f832a79134dd746
+27	2352	7930983596974508	CMakeFiles/codes.dir/opengl/glad.c.obj	7df1afa44aeded6d
+102	1922	7931016345301768	CMakeFiles/village_fare_project.dir/projects/village_fare_project/main.cpp.obj	98c7821917d04cfd
+115	2189	7931016345442893	CMakeFiles/village_fare_project.dir/opengl/glad.c.obj	1a09b8ca9e48a1d8
+12	1035	7931031766036116	CMakeFiles/aeroplane.dir/opengl/glad.c.obj	8dc88b167a2fff8c
+82	1350	7931039394520857	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	43ed9e75c81204c3
+1350	1534	7931039407216085	projects/aeroplane/aeroplane.exe	be1031abada46835
+67	498	7953032952393217	build.ninja	dace66de0ea1a6d0
+67	498	7953032952241721	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
+12	5313	7953021819028343	CMakeFiles/village_fair.dir/projects/village_fair/image_loader.cpp.obj	753218414ccfcaf9
+19	6032	7953021819142919	CMakeFiles/village_fair.dir/opengl/glad.c.obj	a64997832e9bad13
+10	3769	7953032261412131	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+3771	4043	7953032299006979	projects/village_fair/village_fair.exe	b15e38ab1ac00e82

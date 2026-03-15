@@ -1,5 +1,6 @@
 D:/Documents/3D graphics/build/CMakeFiles/bulldozer.dir
 D:/Documents/3D graphics/build/CMakeFiles/shelf.dir
 D:/Documents/3D graphics/build/CMakeFiles/aeroplane.dir
+D:/Documents/3D graphics/build/CMakeFiles/village_fair.dir
 D:/Documents/3D graphics/build/CMakeFiles/edit_cache.dir
 D:/Documents/3D graphics/build/CMakeFiles/rebuild_cache.dir
