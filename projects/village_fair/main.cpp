@@ -35,6 +35,12 @@ void Road(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Boundary(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Gate(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int texture);
+void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, unsigned int texture);
+void Tree(Shader ourShader, glm::mat4 moveMatrix, float trunkHeight, glm::vec4 leafColor);
+void BalloonBunch(Shader ourShader, glm::mat4 moveMatrix);
+void FlagBunting(Shader ourShader, glm::mat4 moveMatrix, float length);
+void VendorCart(Shader ourShader, glm::mat4 moveMatrix);
+void Well(Shader ourShader, glm::mat4 moveMatrix);
 void LampPost(Shader ourShader, glm::mat4 moveMatrix);
 void load_texture(unsigned int& texture, string image_name, GLenum format);
 unsigned int loadTexture(char const* path, GLenum textureWrappingModeS, GLenum textureWrappingModeT, GLenum textureFilteringModeMin, GLenum textureFilteringModeMax);
@@ -138,7 +144,77 @@ const int ntheta = 30;
 unsigned int cubeVAO, cubeVBO, cubeEBO;
 unsigned int bezierVAO, boatVAO, rotorVAO, cylinderVAO, carousalVAO, headVAO;
 
+// Sphere VAO variables
+unsigned int sphereVAO, sphereVBO, sphereEBO;
+std::vector<float> sphereVertices;
+std::vector<unsigned int> sphereIndices;
+int sphereIndexCount = 0;
 
+void generateSphere(float radius, int sectors, int stacks) {
+    sphereVertices.clear();
+    sphereIndices.clear();
+
+    float sectorStep = 2 * M_PI / sectors;
+    float stackStep  = M_PI / stacks;
+
+    for (int i = 0; i <= stacks; i++) {
+        float stackAngle = M_PI / 2 - i * stackStep;
+        float xy = radius * cos(stackAngle);
+        float z  = radius * sin(stackAngle);
+        for (int j = 0; j <= sectors; j++) {
+            float sectorAngle = j * sectorStep;
+            float x = xy * cos(sectorAngle);
+            float y = xy * sin(sectorAngle);
+            // pos
+            sphereVertices.push_back(x);
+            sphereVertices.push_back(z); // Y up
+            sphereVertices.push_back(y);
+            // normal
+            sphereVertices.push_back(x / radius);
+            sphereVertices.push_back(z / radius);
+            sphereVertices.push_back(y / radius);
+            // uv
+            sphereVertices.push_back((float)j / sectors);
+            sphereVertices.push_back((float)i / stacks);
+        }
+    }
+    for (int i = 0; i < stacks; i++) {
+        int k1 = i * (sectors + 1);
+        int k2 = k1 + sectors + 1;
+        for (int j = 0; j < sectors; j++, k1++, k2++) {
+            if (i != 0) {
+                sphereIndices.push_back(k1);
+                sphereIndices.push_back(k2);
+                sphereIndices.push_back(k1 + 1);
+            }
+            if (i != stacks - 1) {
+                sphereIndices.push_back(k1 + 1);
+                sphereIndices.push_back(k2);
+                sphereIndices.push_back(k2 + 1);
+            }
+        }
+    }
+    sphereIndexCount = sphereIndices.size();
+
+    glGenVertexArrays(1, &sphereVAO);
+    glGenBuffers(1, &sphereVBO);
+    glGenBuffers(1, &sphereEBO);
+    glBindVertexArray(sphereVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
+    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
+    // pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // uv
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+}
 
 // Add this in the initialization section of main.cpp, after other objects are set up
 unsigned int riverVAO;
@@ -235,7 +311,7 @@ std::vector<float> generateCanopyControlPoints() {
 
 
 // Textures
-unsigned int texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9,texture10,garden2,garden1,whiteflower,shoptex;
+unsigned int texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9,texture10,garden2,garden1,whiteflower,shoptex,bambooTex;
 
 bool textureOn = false;
 // Skybox
@@ -479,6 +555,8 @@ int main()
     };
 
 
+    // Initialize sphere model data
+    generateSphere(1.0f, 24, 18);
 
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &cubeVBO);
@@ -671,6 +749,7 @@ int main()
     load_texture(garden1, "textures/flower2.png", GL_RGBA);
     load_texture(whiteflower, "textures/white.png", GL_RGBA);
     load_texture(shoptex, "textures/shop.png", GL_RGBA);
+    load_texture(bambooTex, "textures/bamboo.png", GL_RGBA);
 
 
     //unsigned int footballMap = loadTexture(footballPath.c_str(), GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
@@ -837,71 +916,129 @@ unsigned int canopyVAO = hollowBezier(
         glBindTexture(GL_TEXTURE_2D, texture4);
         Road(ourShader, translateMatrix, color1);
 
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(11.4f, -2.145f, 26.0f));
-        color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        glBindTexture(GL_TEXTURE_2D, garden1);
-        garden(ourShader, translateMatrix, color1);
+        // Boundary, Garden, and Gate removed
 
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.95f, -2.145f, 26.0f));
-        color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        glBindTexture(GL_TEXTURE_2D, garden1);
-        garden(ourShader, translateMatrix, color1);
+        glm::mat4 rotCW  = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
+        glm::mat4 rotCCW = glm::rotate(identityMatrix, glm::radians(-90.0f), glm::vec3(0,1,0));
+        glm::mat4 rot180 = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0,1,0));
 
+        // ---- LEFT SIDE SHOPS (facing road/center) ----
+        // Shop 1 - Left front
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, 2.0f));
+        Shop(ourShader, translateMatrix * rotCW, glm::vec4(1,1,1,1), textureOn ? texture0 : bambooTex);
 
-        //Boundary
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
-        color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        Boundary(ourShader, translateMatrix, color1);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
-        color1 = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
-        Gate(ourShader, translateMatrix, color1);
+        // Shop 2 - Left middle (variant - fruit stall)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, -3.5f));
+        ShopVariant(ourShader, translateMatrix * rotCW,
+            glm::vec4(0.85f, 0.55f, 0.10f, 1.0f),  // orange roof
+            textureOn ? texture0 : bambooTex);
 
-        
+        // Shop 3 - Left back
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, -9.0f));
+        Shop(ourShader, translateMatrix * rotCW, glm::vec4(0.9f, 0.85f, 0.75f, 1.0f),
+            textureOn ? texture0 : bambooTex);
 
-       
-        //Shops
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.0f, 0.0f, -2.0f));
-        if (!textureOn) {
-            Shop(ourShader, translateMatrix, color1, texture5);
+        // ---- RIGHT SIDE SHOPS (facing road/center) ----
+        // Shop 4 - Right front
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, 2.0f));
+        Shop(ourShader, translateMatrix * rotCCW, glm::vec4(1,1,1,1), textureOn ? texture0 : bambooTex);
+
+        // Shop 5 - Right middle (variant)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, -3.5f));
+        ShopVariant(ourShader, translateMatrix * rotCCW,
+            glm::vec4(0.60f, 0.80f, 0.40f, 1.0f),  // green roof
+            textureOn ? texture0 : bambooTex);
+
+        // Shop 6 - Right back
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, -9.0f));
+        Shop(ourShader, translateMatrix * rotCCW, glm::vec4(0.95f, 0.90f, 0.80f, 1.0f),
+            textureOn ? texture0 : bambooTex);
+
+        // Shop 7 - Back wall, facing entrance
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(5.0f, 0.0f, -14.5f));
+        ShopVariant(ourShader, translateMatrix * rot180,
+            glm::vec4(0.70f, 0.30f, 0.20f, 1.0f),  // red roof
+            textureOn ? texture0 : bambooTex);
+
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(11.0f, 0.0f, -14.5f));
+        Shop(ourShader, translateMatrix * rot180, glm::vec4(1,1,1,1),
+            textureOn ? texture0 : bambooTex);
+
+        // ---- TREES scattered around ----
+        glm::vec4 darkGreen   = glm::vec4(0.10f, 0.40f, 0.12f, 1.0f);
+        glm::vec4 lightGreen  = glm::vec4(0.25f, 0.55f, 0.18f, 1.0f);
+
+        // Left side tree line
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.5f, -0.42f,  5.0f));
+        Tree(ourShader, translateMatrix, 1.4f, darkGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.5f, -0.42f, -1.0f));
+        Tree(ourShader, translateMatrix, 1.8f, lightGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.5f, -0.42f, -7.0f));
+        Tree(ourShader, translateMatrix, 1.3f, darkGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.5f, -0.42f,-12.0f));
+        Tree(ourShader, translateMatrix, 1.6f, lightGreen);
+
+        // Right side tree line
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(19.5f, -0.42f,  5.0f));
+        Tree(ourShader, translateMatrix, 1.5f, lightGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(19.5f, -0.42f, -1.0f));
+        Tree(ourShader, translateMatrix, 1.7f, darkGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(19.5f, -0.42f, -7.0f));
+        Tree(ourShader, translateMatrix, 1.4f, lightGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(19.5f, -0.42f,-12.0f));
+        Tree(ourShader, translateMatrix, 1.9f, darkGreen);
+
+        // Front border trees
+        for (float fx = -1.0f; fx <= 17.0f; fx += 4.5f) {
+            if (abs(fx - 7.3f) < 2.0f) continue; // Skip road
+            translateMatrix = glm::translate(identityMatrix, glm::vec3(fx, -0.42f, 16.0f));
+            Tree(ourShader, translateMatrix, 1.4f + (0.1f * ((int)fx % 3)), (int)fx % 2 == 0 ? darkGreen : lightGreen);
         }
-        else
-        {
 
-            Shop(ourShader, translateMatrix, color1, texture0);
-        }
-        
-        
-        color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        glm::mat4 reflectionMatrix(1.0f);
-        glm::vec3 normal(1.0f, 0.0f, 0.0f);
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                reflectionMatrix[i][j] = (i == j) ? 1.0f - 2.0f * normal[i] * normal[j] : -2.0f * normal[i] * normal[j];
-            }
-        }
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-7.2f, 0.0f, -15.0f));
-        color1 = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
-        if (!textureOn) {
-            Shop(ourShader, reflectionMatrix * translateMatrix, color1, texture6);
-        }
-        else
-        {
-
-            Shop(ourShader, reflectionMatrix * translateMatrix, color1, texture0);
+        // Back border trees
+        for (float bx = -1.0f; bx <= 17.0f; bx += 4.5f) {
+            translateMatrix = glm::translate(identityMatrix, glm::vec3(bx, -0.42f, -17.0f));
+            Tree(ourShader, translateMatrix, 1.5f + (0.1f * ((int)bx % 3)), (int)bx % 2 != 0 ? darkGreen : lightGreen);
         }
 
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, 0.0f, -13.0f));
-        color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        if (!textureOn) {
-            Shop(ourShader, translateMatrix, color1, shoptex);
-        }
-        else
-        {
+        // Scattered interior trees (between attractions)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3( 3.5f, -0.42f, 10.0f));
+        Tree(ourShader, translateMatrix, 1.2f, darkGreen);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(13.0f, -0.42f, 10.0f));
+        Tree(ourShader, translateMatrix, 1.3f, lightGreen);
+        // Balloon vendor near entrance
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.5f, -0.42f, 13.0f));
+        BalloonBunch(ourShader, translateMatrix);
 
-            Shop(ourShader, translateMatrix, color1, texture0);
-        }
-        
+        glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
 
+        // Across entrance (spans X from gate pillar to gate pillar ~7.0 to 10.0 = 3 units)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, 15.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        // Left side - runs along Z axis so needs rotY90
+        // Starts at front (Z=13) runs toward back (Z=-13) = 26 units
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.8f, -0.42f, 13.0f));
+        FlagBunting(ourShader, translateMatrix * rotY90, 26.0f);
+
+        // Right side - same but on right
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(18.0f, -0.42f, 13.0f));
+        FlagBunting(ourShader, translateMatrix * rotY90, 26.0f);
+
+        // Cross bunting over road center (optional - festive arch effect)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, 5.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, -5.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        // Vendor cart in center path
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.5f, -0.42f, 5.0f));
+        VendorCart(ourShader, translateMatrix);
+
+        // Well near back of fair
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.42f, -8.0f));
+        Well(ourShader, translateMatrix);
         //seat
         translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.6f, 0.0f));
         seat(ourShader, translateMatrix);
@@ -1017,14 +1154,6 @@ unsigned int canopyVAO = hollowBezier(
         // Draw a tree at a specific location
         treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(12.0f, 0.0f, -11.5f));
         drawRealisticTree(ourShader, treeModel, trunkVAO, canopyVAO, trunkIndices, canopyIndices);
-
-        //glass
-        glass(ourShader, VAOdec2, 3.0, 0.38, 6.5, 12.0, 4.0, .025);
-        glass(ourShader, VAOdec2, 2.5, 0.38, 6.9, 12.0, 4.0, .025);
-        glass(ourShader, VAOdec2, 2.5, 0.38, 7.2, 12.0, 4.0, .025);
-        glass(ourShader, VAOdec2, 3.0, 0.38, 6.9, 12.0, 4.0, .025);
-
-        glass(ourShader, VAOdec2, 3.4, 0.38, 7.0, 12.0, 4.0, .025);
 
         //********* END of Object Making **********
 
