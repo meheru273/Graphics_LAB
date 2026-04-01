@@ -113,31 +113,14 @@ public:
     void RotateAroundLookAt(float change)
     {
         change *= MouseSensitivity;
-        glm::mat4 identityMatrix = glm::mat4(1.0f);
-        glm::mat4 translateToPivot = glm::mat4(1.0f), translateFromPivot = glm::mat4(1.0f), rotateYMatrix;
-        /*translateToPivot = glm::translate(identityMatrix, -Front);
-        translateFromPivot = glm::translate(identityMatrix, Front);*/
-        
-
-        rotateYMatrix = glm::rotate(identityMatrix, glm::radians(change), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec4 temp = glm::vec4(Position, 1.0f);
-        temp = translateFromPivot * rotateYMatrix * translateToPivot * temp;
-
-
-        //Position = temp;            //also works
-        Position.x = temp.x;
-        Position.y = temp.y;
-        Position.z = temp.z;
-
-        //// Calculate the position of the camera after rotation
-        //glm::vec3 direction = glm::normalize(Position - Front);
-        //glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(change), Up);
-        //glm::vec3 rotatedDistance = glm::vec3(rotationMatrix * glm::vec4(direction, 1.0f));
-        //Position = Front + rotatedDistance;
-        //updateCameraVectors();
-
-        //LOOKAT = Position + Front;
-
+        // Orbit camera position around the current LOOKAT point
+        glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(change), WorldUp);
+        glm::vec3 offset = glm::vec3(rotateY * glm::vec4(Position - LOOKAT, 0.0f));
+        Position = LOOKAT + offset;
+        // Update orientation so camera keeps facing LOOKAT, and skybox view follows
+        Front = glm::normalize(LOOKAT - Position);
+        Right = glm::normalize(glm::cross(Front, WorldUp));
+        Up    = glm::normalize(glm::cross(Right, Front));
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.

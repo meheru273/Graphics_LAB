@@ -21,138 +21,52 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(RIGHT, deltaTime);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)                   //Down
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)                   //Camera Up
+    {
+        camera.ProcessKeyboard(UP, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)                   //Camera Down
     {
         camera.ProcessKeyboard(DOWN, deltaTime);
     }
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)                   //Down
-    {
-        if (!textureOn) textureOn = true;
-    }
 
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)                   //Pitch positive
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)                   //Pitch up
     {
         camera.ProcessYPR(0.0f, 3.0f, 0.0f);
     }
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)                   //Pitch negative
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)                   //Pitch down
     {
         camera.ProcessYPR(0.0f, -3.0f, 0.0f);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)                   //Yaw positive
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)                   //Yaw right
     {
         camera.ProcessYPR(3.0f, 0.0f, 0.0f);
     }
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)                   //Yaw negative
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)                   //Yaw left
     {
         camera.ProcessYPR(-3.0f, 0.0f, 0.0f);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)                   //Roll positive
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)                   //Roll right
     {
         camera.ProcessYPR(0.0f, 0.0f, 0.5f);
-
     }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)                   //Roll negative
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)                   //Roll left
     {
         camera.ProcessYPR(0.0f, 0.0f, -0.5f);
-
     }
 
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)                   //Orbit left around scene
     {
-        eyeX += 2.5 * deltaTime;
-        basic_camera.changeEye(eyeX, eyeY, eyeZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)                   //Rotate camera around a look at point
-    {                                                                   //Right
         camera.RotateAroundLookAt(2.0f);
     }
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)                   //Rotate camera around a look at point
-    {                                                                   //Left
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)                   //Orbit right around scene
+    {
         camera.RotateAroundLookAt(-2.0f);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-    {
-        eyeZ += 2.5 * deltaTime;
-        basic_camera.changeEye(eyeX, eyeY, eyeZ);
-    }
-    
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        eyeY += 2.5 * deltaTime;
-        basic_camera.changeEye(eyeX, eyeY, eyeZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)                   //Up
-    {
-        eyeY -= 2.5 * deltaTime;
-        basic_camera.changeEye(eyeX, eyeY, eyeZ);
 
-        camera.ProcessKeyboard(UP, deltaTime);
-
-    }
-
-
-    //if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)               //Basic Camera rotate around lookat
-    //{
-    //    //lookAtX += 2.5 * deltaTime;
-    //    //basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-    //    float change = -0.3f;
-    //    float x, y, z;
-    //    x = eyeX * cos(glm::radians(change)) + eyeZ * sin(glm::radians(change));
-    //    y = eyeY;
-    //    z = - eyeX * sin(glm::radians(change)) + eyeZ * cos(glm::radians(change));
-
-    //    eyeX = x, eyeY = y, eyeZ = z;
-    //    basic_camera.changeEye(eyeX, eyeY, eyeZ);
-    //}
-    //if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-    //{
-    //    //lookAtX -= 2.5 * deltaTime;
-    //    //basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-
-    //    float change = 0.3f;
-    //    float x, y, z;
-    //    x = eyeX * cos(glm::radians(change)) + eyeZ * sin(glm::radians(change));
-    //    y = eyeY;
-    //    z = -eyeX * sin(glm::radians(change)) + eyeZ * cos(glm::radians(change));
-
-    //    eyeX = x, eyeY = y, eyeZ = z;
-    //    basic_camera.changeEye(eyeX, eyeY, eyeZ);
-    //}
-    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
-    {
-        lookAtY += 2.5 * deltaTime;
-        basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
-    {
-        lookAtY -= 2.5 * deltaTime;
-        basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
-    {
-        lookAtZ += 2.5 * deltaTime;
-        basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
-    {
-        lookAtZ -= 2.5 * deltaTime;
-        basic_camera.changeLookAt(lookAtX, lookAtY, lookAtZ);
-    }
-    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
-    {
-        basic_camera.changeViewUpVector(glm::vec3(1.0f, 0.0f, 0.0f));
-    }
-    if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
-    {
-        basic_camera.changeViewUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
-    {
-        basic_camera.changeViewUpVector(glm::vec3(0.0f, 0.0f, 1.0f));
-    }
 
 }
 

@@ -829,7 +829,7 @@ unsigned int canopyVAO = hollowBezier(
         glBindVertexArray(cubeVAO);
 
         // pass projection matrix to shader (note that in this case it could change every frame)
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         //glm::mat4 projection = glm::ortho(-2.0f, +2.0f, -1.5f, +1.5f, 0.1f, 100.0f);
         ourShader.setMat4("projection", projection);
 
@@ -899,6 +899,23 @@ unsigned int canopyVAO = hollowBezier(
 
 
         glActiveTexture(GL_TEXTURE0);
+
+        // === LARGE GROUND PLANE - extends to horizon so village doesn't float ===
+        // Cube vertices span (0,0,0) to (0.5,0.5,0.5).
+        // With scale 4000, ground spans 0..2000 units.
+        // To center at village (X≈8, Z≈0): translate X = 8 - 2000/2 = -992, Z = 0 - 2000/2 = -1000
+        {
+            glBindTexture(GL_TEXTURE_2D, texture1);  // grass texture
+            glm::mat4 groundTranslate = glm::translate(identityMatrix, glm::vec3(-992.0f, -0.46f, -1000.0f));
+            glm::mat4 groundScale = glm::scale(identityMatrix, glm::vec3(4000.0f, 0.1f, 4000.0f));
+            glm::mat4 groundModel = groundTranslate * groundScale;
+            ourShader.setMat4("model", groundModel);
+            ourShader.setVec4("material.ambient", glm::vec4(0.3f, 0.5f, 0.2f, 1.0f));
+            ourShader.setVec4("material.diffuse", glm::vec4(0.3f, 0.5f, 0.2f, 1.0f));
+            ourShader.setVec4("material.specular", glm::vec4(0.05f, 0.05f, 0.05f, 0.5f));
+            ourShader.setFloat("material.shininess", 4.0f);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
         //Ground
         translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, -2.15f, 2.0f));
         color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1188,7 +1205,7 @@ unsigned int canopyVAO = hollowBezier(
 
 
             lightCubeShader.setVec4("bodyColor", bodyColor);
-            glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+            glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
             lightCubeShader.setMat4("projection", projection);
             glm::mat4 view = camera.GetViewMatrix();
             lightCubeShader.setMat4("view", view);
@@ -1206,7 +1223,7 @@ unsigned int canopyVAO = hollowBezier(
         skyboxShader.use();
         glm::mat4 view1 = glm::mat4(1.0f);
         glm::mat4 projection1 = glm::mat4(1.0f);
-        view1 = glm::mat4(glm::mat3(glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up)));
+        view1 = glm::mat4(glm::mat3(camera.GetViewMatrix()));
         projection1 = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         skyboxShader.setMat4("view", view1);
         skyboxShader.setMat4("projection", projection1);
