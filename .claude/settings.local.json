@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake --build . --target village_fair)",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL -I\"D:/Documents/3D graphics/opengl/include\" -I\"D:/Documents/3D graphics/projects/village_fair\" -I\"D:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -c \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL -I\"D:/Documents/3D graphics/opengl/include\" -I\"D:/Documents/3D graphics/projects/village_fair\" -I\"D:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -fsyntax-only \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(ninja village_fair)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL -I\"D:/Documents/3D graphics/opengl/include\" -I\"D:/Documents/3D graphics/projects/village_fair\" -I\"D:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -MD -MT \"CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj\" -MF \"CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj.d\" -o \"CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj\" -c \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(mkdir -p CMakeFiles/village_fair.dir/projects/village_fair)",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL \"-ID:/Documents/3D graphics/opengl/include\" \"-ID:/Documents/3D graphics/projects/village_fair\" \"-ID:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -MD -MT CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -MF CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj.d -o CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -c \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(ninja -C \"d:/Documents/3D graphics/build\" village_fair)",
+      "Bash(cmd.exe /c \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\c++.exe -DGLFW_DLL -I\\\\\"D:/Documents/3D graphics/opengl/include\\\\\" -I\\\\\"D:/Documents/3D graphics/projects/village_fair\\\\\" -I\\\\\"D:/Documents/3D graphics/projects/village_fair/include\\\\\" -std=gnu++11 -MD -MT CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -MF CMakeFiles\\\\village_fair.dir\\\\projects\\\\village_fair\\\\main.cpp.obj.d -o CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -c \\\\\"D:/Documents/3D graphics/projects/village_fair/main.cpp\\\\\" 2>&1\")",
+      "Bash(cmd.exe /c \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\c++.exe -DGLFW_DLL -I\\\\\"D:/Documents/3D graphics/opengl/include\\\\\" -I\\\\\"D:/Documents/3D graphics/projects/village_fair\\\\\" -I\\\\\"D:/Documents/3D graphics/projects/village_fair/include\\\\\" -std=gnu++11 -MD -MT CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -MF CMakeFiles\\\\village_fair.dir\\\\projects\\\\village_fair\\\\main.cpp.obj.d -o CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj -c \\\\\"D:/Documents/3D graphics/projects/village_fair/main.cpp\\\\\" && echo SUCCESS\")",
+      "Bash(cmd.exe /c \"echo CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj: > CMakeFiles\\\\village_fair.dir\\\\projects\\\\village_fair\\\\main.cpp.obj.d\")",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL \"-ID:/Documents/3D graphics/opengl/include\" \"-ID:/Documents/3D graphics/projects/village_fair\" \"-ID:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -o /tmp/test.obj -c \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe --version)",
+      "Read(//tmp/**)",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL \"-ID:/Documents/3D graphics/opengl/include\" \"-ID:/Documents/3D graphics/projects/village_fair\" \"-ID:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -O0 -fno-inline -o /tmp/test.obj -c \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(C:/msys64/ucrt64/bin/c++.exe -DGLFW_DLL \"-ID:/Documents/3D graphics/opengl/include\" \"-ID:/Documents/3D graphics/projects/village_fair\" \"-ID:/Documents/3D graphics/projects/village_fair/include\" -std=gnu++11 -E \"D:/Documents/3D graphics/projects/village_fair/main.cpp\")",
+      "Bash(cmake --build build --target village_fair)",
+      "Bash(ninja -v -j1 CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

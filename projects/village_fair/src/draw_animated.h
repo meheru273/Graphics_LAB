@@ -165,20 +165,20 @@ void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix)
     ourShader.setVec4("material.ambient", color);
     ourShader.setVec4("material.diffuse", color);
     ourShader.setVec4("material.specular", color);
-    //sitting places
+    //sitting places — pass moveMatrix as parentMove (4th arg) so seats follow the wheel
     translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, 12.0f));
-    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle);
+    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle, moveMatrix);
     translateMatrix = glm::translate(identityMatrix, glm::vec3(1.5f, 1.5f, 12.0f));
-    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle);
+    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle, moveMatrix);
     translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 3.0f, 12.0f));
-    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle);
+    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle, moveMatrix);
     translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.5f, 1.5f, 12.0f));
-    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle);
+    FerrisWheelSeat(ourShader, translateMatrix, ferrisWheelAngle, moveMatrix);
 
 
 }
 
-void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z)
+void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z, glm::mat4 parentMove)
 {
     glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     glm::mat4 translateMatrix, scaleMatrix, model, rotateZMatrixLocal, rotateZMatrixMain, rotateTemp;
@@ -206,7 +206,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(2.0f, 0.1f, 1.5f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -218,7 +218,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 0.5f, 1.5f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -227,7 +227,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 1.5f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -238,7 +238,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 0.5f, 1.5f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -247,7 +247,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 1.5f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -260,7 +260,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(1.1f, 0.1f, 0.1f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -269,7 +269,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(1.1f, 0.1f, 0.1f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -278,7 +278,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(1.15f, 0.1f, 0.05f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -286,7 +286,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     translateMatrix = glm::translate(identityMatrix, glm::vec3(2.5f, 0.25f, -0.1751f));
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(1.15f, 0.1f, 0.05f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -298,7 +298,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(-1.1f, 0.1f, 0.1f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(-20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -307,7 +307,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(-1.1f, 0.1f, 0.1f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(-20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -316,7 +316,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(-1.15f, 0.1f, 0.05f));
     rotateTemp = glm::rotate(identityMatrix, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -324,7 +324,7 @@ void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTe
     translateMatrix = glm::translate(identityMatrix, glm::vec3(3.5f, 0.25f, -0.1751f));
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(-1.15f, 0.1f, 0.05f));
     model = translateFromPivotLocal * rotateZMatrixLocal * translateToPivotLocal * translateFromPivotMain * rotateZMatrixMain * translateToPivotMain * translateMatrix * rotateTemp * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
+    ourShader.setMat4("model", parentMove * moveMatrix * model);
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

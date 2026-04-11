@@ -43,7 +43,6 @@ void SetupPointLight(PointLight &pointLight, Shader ourShader, int lightNum)
 }
 
 
-
 //OBJECTS
 
 void drawCube(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y, glm::vec4 color, float spec, float shininess)
@@ -89,226 +88,14 @@ void drawCube1(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y, 
 }
 
 
-void Table(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
-{
-
-    float tableY = 0.05f;
-    // Rotation
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    glm::mat4 translateMatrix, scaleMatrix, model, rotateYMatrix;
-
-    glm::mat4 translateToPivot, translateFromPivot;
-    glm::vec4 translateToPivotOrg, translateFromPivotOrg;
-    glm::vec3 pivot;
-
-    pivot = glm::vec3(0.25, 0.25 + tableY, 0.25);
-    
-    //Top
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f + tableY, 0.0f));
-    rotateYMatrix = glm::rotate(identityMatrix, glm::radians(rotateAngleTest_Y), glm::vec3(0.0f, 1.0f, 0.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(2.0f, 0.1f, 1.3f));
-
-    translateToPivotOrg = scaleMatrix * glm::vec4(-pivot, 0.0f);
-    translateFromPivotOrg = scaleMatrix * glm::vec4(pivot, 0.0f);
-    translateToPivot = glm::translate(identityMatrix, glm::vec3(translateToPivotOrg));
-    translateFromPivot = glm::translate(identityMatrix, glm::vec3(translateFromPivotOrg));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    
-    //model = translateMatrix * rotateYMatrix * scaleMatrix;
-    //model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix*model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.5f, 1.0f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.5f, 1.0f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ourShader.setFloat("material.shininess", 128.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    pivot = translateFromPivotOrg;
-    // Leg 1
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.02f, -0.46f + tableY, 0.01f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 0.1f));
-
-    translateToPivotOrg = glm::vec4(-pivot, 0.0f);
-    translateFromPivotOrg = glm::vec4(pivot, 0.0f);
-    translateToPivot = glm::translate(identityMatrix, glm::vec3(translateToPivotOrg));
-    translateFromPivot = glm::translate(identityMatrix, glm::vec3(translateFromPivotOrg));
-    
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    // Leg 2
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.02f, -0.46f + tableY, 0.559f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 0.1f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    // Leg 3
-    //glm::mat4 translateMatrix1, rotateXMatrix1, rotateYMatrix1, rotateZMatrix1, scaleMatrix1, model1;
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.92f, -0.46f + tableY, 0.01f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 0.1f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    // Leg 4
-    //glm::mat4 translateMatrix2, rotateXMatrix2, rotateYMatrix2, rotateZMatrix2, scaleMatrix2, model2;
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.92f, -0.46f + tableY, 0.559f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 1.0f, 0.1f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-}
-
-void Chair(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
-{
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    glm::mat4 translateMatrix, scaleMatrix, model, rotateYMatrix;
-    glm::mat4 translateToPivot, translateFromPivot;
-    glm::vec4 translateToPivotOrg, translateFromPivotOrg;
-    glm::vec3 pivot;
-
-    float fixLeg = 0.7f;
-    float fixY = 0.1f;
-    float fixYWhole = -0.08f;
-
-    pivot = glm::vec3(0.25 + 0.11, 0.25 - fixY + fixYWhole, 0.25);
-
-    // Top
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.11f, 0.0f - fixY + fixYWhole, 0.0f));
-    rotateYMatrix = glm::rotate(identityMatrix, glm::radians(rotateAngleTest_Y), glm::vec3(0.0f, 1.0f, 0.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.75f, 0.07f, 0.7f));
-
-    translateToPivotOrg = scaleMatrix * glm::vec4(-pivot, 0.0f);
-    translateFromPivotOrg = scaleMatrix * glm::vec4(pivot, 0.0f);
-    translateToPivot = glm::translate(identityMatrix, glm::vec3(translateToPivotOrg));
-    translateFromPivot = glm::translate(identityMatrix, glm::vec3(translateFromPivotOrg));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.3f, 0.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.3f, 0.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    pivot = translateFromPivotOrg;
-    // Leg 1
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.13f, -0.32f + fixYWhole, 0.01f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.7f * fixLeg, 0.07f));
-
-    translateToPivotOrg = glm::vec4(-pivot, 0.0f);
-    translateFromPivotOrg = glm::vec4(pivot, 0.0f);
-    translateToPivot = glm::translate(identityMatrix, glm::vec3(translateToPivotOrg));
-    translateFromPivot = glm::translate(identityMatrix, glm::vec3(translateFromPivotOrg));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    // Leg 2
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.13f, -0.32f + fixYWhole, 0.28f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.7f * fixLeg, 0.07f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    /*ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);*/
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    //// Leg 3
-    //glm::mat4 translateMatrix1, rotateXMatrix1, rotateYMatrix1, rotateZMatrix1, scaleMatrix1, model1;
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.43f, -0.32f + fixYWhole, 0.01f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.7f * fixLeg, 0.07f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    /*ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);*/
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    // Leg 4
-    //glm::mat4 translateMatrix2, rotateXMatrix2, rotateYMatrix2, rotateZMatrix2, scaleMatrix2, model2;
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.43f, -0.32f + fixYWhole, 0.28f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.7f * fixLeg, 0.07f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    /*ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);*/
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    //Left up 
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.17f, 0.01f - fixY + fixYWhole, 0.29f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.25f, 0.07f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-    //Right up
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.39f, 0.01f - fixY + fixYWhole, 0.29f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.07f, 0.25f, 0.07f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    //Back support
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.15f, 0.09f - fixY + fixYWhole, 0.28f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 0.5f, 0.1f));
-
-    model = translateFromPivot * rotateYMatrix * translateToPivot * translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.9f, 0.3f, 1.0f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.9f, 0.3f, 1.0f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-}
-
 void Floor (Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
 {
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    glm::mat4 identityMatrix = glm::mat4(1.0f);
     glm::mat4 translateMatrix, scaleMatrix, model;
 
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, 1.25f + 0.45f, -16.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(40.3f, 0.1f, 60.0f));
+    // Compacted compound: X from -3 to 36 (width=39), Z from -16 to 16 (depth=32)
+    translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.0f, 1.7f, -18.0f));
+    scaleMatrix = glm::scale(identityMatrix, glm::vec3(78.0f, 0.1f, 64.0f));
     model = translateMatrix * scaleMatrix;
     ourShader.setMat4("model", moveMatrix * model);
     ourShader.setVec4("material.ambient", color);
@@ -354,80 +141,72 @@ void garden(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
 
 void Boundary(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
 {
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    glm::mat4 identityMatrix = glm::mat4(1.0f);
     glm::mat4 translateMatrix, scaleMatrix, model;
 
-    //Left Side
     if (!textureOn)
-    {
         glBindTexture(GL_TEXTURE_2D, texture3);
-    }
     else
-    {
-
         glBindTexture(GL_TEXTURE_2D, texture0);
-    }
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, -0.42f, 15.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(18.2f, 2.2f, 0.2f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", color);
-    ourShader.setVec4("material.diffuse", color);
-    ourShader.setVec4("material.specular", color * 0.5f);
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    //Left Wall
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, -0.42f, 15.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.2f, 2.2f, -57.8f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    //Right Side
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(18.15f, -0.42f, 15.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(-17.2f, 2.2f, 0.2f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    //Right Wall
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(18.15f, -0.42f, 15.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(-0.2f, 2.2f, -57.8f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    // Compound extents
+    const float wallH   = 2.2f;
+    const float wallThk = 0.2f;
+    const float yBase   = -0.42f;
+    const float xMin    = -2.5f;
+    const float xMax    = 42.5f;
+    const float zBack   = -20.0f;
+    const float zFront  =  20.0f;
+    const float width   = xMax - xMin;   // 45
+    const float depth   = zFront - zBack; // 40
 
-    //Back
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, -0.42f, -14.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(19.2f, 2.2f, 0.2f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(18.15f, -0.42f, -14.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(-21.2f, 2.2f, 0.2f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    auto drawWall = [&](float tx, float ty, float tz, float sx, float sy, float sz) {
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(tx, ty, tz));
+        scaleMatrix     = glm::scale(identityMatrix, glm::vec3(sx, sy, sz));
+        model           = translateMatrix * scaleMatrix;
+        ourShader.setMat4("model", moveMatrix * model);
+        ourShader.setVec4("material.ambient",  color);
+        ourShader.setVec4("material.diffuse",  color);
+        ourShader.setVec4("material.specular", color * 0.5f);
+        ourShader.setFloat("material.shininess", 32.0f);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    };
 
+    // Back wall  (Z = zBack, spans full width)
+    drawWall(xMin, yBase, zBack, width, wallH, wallThk);
 
-    //Left Side Pillar
+    // Left wall  (X = xMin, spans full depth)
+    drawWall(xMin, yBase, zBack, wallThk, wallH, depth);
+
+    // Right wall (X = xMax, spans full depth)
+    drawWall(xMax, yBase, zBack, wallThk, wallH, depth);
+
+    // Front wall (Z = zFront) — two halves with a 5-unit entrance gap centered at X=21
+    const float gapHalfW    = 2.5f;
+    const float gapCenterX  = 21.0f;
+    const float leftFrontW  = (gapCenterX - gapHalfW) - xMin;  // xMin to 18.5
+    const float rightFrontX = gapCenterX + gapHalfW;            // 23.5
+    const float rightFrontW = xMax - rightFrontX;               // 23.5 to xMax
+    drawWall(xMin,       yBase, zFront, leftFrontW,  wallH, wallThk);
+    drawWall(rightFrontX, yBase, zFront, rightFrontW, wallH, wallThk);
+
+    // Entry pillars flanking the gap
     glBindTexture(GL_TEXTURE_2D, texture0);
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, 14.9f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 2.6f, 0.6f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", color * 0.5f);
-    ourShader.setVec4("material.diffuse", color * 0.5f);
-    ourShader.setVec4("material.specular", color * 0.5f * 0.5f);
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    //Right Side Pillar
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(9.35f, -0.42f, 14.9f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 2.6f, 0.6f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
+    auto drawPillar = [&](float tx, float ty, float tz, float sx, float sy, float sz) {
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(tx, ty, tz));
+        scaleMatrix     = glm::scale(identityMatrix, glm::vec3(sx, sy, sz));
+        model           = translateMatrix * scaleMatrix;
+        ourShader.setMat4("model", moveMatrix * model);
+        ourShader.setVec4("material.ambient",  color * 0.5f);
+        ourShader.setVec4("material.diffuse",  color * 0.5f);
+        ourShader.setVec4("material.specular", color * 0.25f);
+        ourShader.setFloat("material.shininess", 32.0f);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    };
+    // Left pillar (just left of gap)
+    drawPillar(gapCenterX - gapHalfW - 0.6f, yBase, zFront - 0.2f, 0.6f, wallH * 1.2f, 0.6f);
+    // Right pillar (just right of gap)
+    drawPillar(rightFrontX,                  yBase, zFront - 0.2f, 0.6f, wallH * 1.2f, 0.6f);
 }
 
 
@@ -1395,24 +1174,4 @@ void FoodPlace(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
 
 void TableChairSet(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
 {
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    glm::mat4 translateMatrix, scaleMatrix, model, rotateYMatrix;
-
-    glBindTexture(GL_TEXTURE_2D, texture0);
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(2.5f, 0.0f, 4.0f));
-    Table(ourShader, moveMatrix * translateMatrix, 90.0);
-
-    //1
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(2.70f, 0.0f, 4.75f));
-    Chair(ourShader, moveMatrix * translateMatrix, 0);
-
-    //2
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(3.25f, 0.0f, 4.15f));
-    Chair(ourShader, moveMatrix * translateMatrix, 90.0f);
-
-    //3
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(2.73f, 0.0f, 3.55f));
-    Chair(ourShader, moveMatrix * translateMatrix, 180.0f);
-
-
 }
