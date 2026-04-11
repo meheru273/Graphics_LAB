@@ -65,6 +65,12 @@ uniform bool lightingOn;
 uniform bool alphaTest;
 //uniform bool dark;
 
+// ── Fog ──────────────────────────────────────────────────────────
+uniform bool  fogEnabled;
+uniform vec3  fogColor;    // should match sky / horizon color
+uniform float fogStart;    // distance where fog begins
+uniform float fogEnd;      // distance where fog is fully opaque
+
 uniform sampler2D ourTexture;
 
 in vec3 Normal;
@@ -115,7 +121,16 @@ void main()
     vec4 texColor = texture(ourTexture, TexCoord);
     if (alphaTest && texColor.a < 0.15)
         discard;
-    FragColor = texColor * result;
+    vec4 pixelColor = texColor * result;
+
+    // ── Linear fog blending ─────────────────────────────────────────
+    if (fogEnabled) {
+        float dist = length(viewPos - FragPos);
+        float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+        pixelColor = mix(pixelColor, vec4(fogColor, 1.0), fogFactor);
+    }
+
+    FragColor = pixelColor;
 }
 
 vec4 CalcDirLight(Material material, DirectionalLight light, vec3 normal, vec3 fragPos)

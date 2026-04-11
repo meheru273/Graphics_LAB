@@ -42,7 +42,7 @@ void processInput(GLFWwindow* window)
 
     // ── Clamp camera inside tent when in interior mode ──
     if (g_insideTent) {
-        // Clamp XZ to tent cylinder (strict — no escaping)
+    // Clamp XZ to tent cylinder (strict — no escaping)
         glm::vec2 offset(camera.Position.x - g_tentCenter.x,
                          camera.Position.z - g_tentCenter.z);
         float dist = glm::length(offset);
@@ -56,6 +56,24 @@ void processInput(GLFWwindow* window)
             camera.Position.y = g_tentFloorY;
         if (camera.Position.y > g_tentCeilY)
             camera.Position.y = g_tentCeilY;
+        camera.LOOKAT = camera.Position + camera.Front;
+    }
+
+    // ── Clamp camera to extended boundary (10 units beyond fence) ──────
+    if (!g_insideTent) {
+        const float X_MIN = -30.0f, X_MAX = 28.0f;
+        const float Z_MIN = -29.0f, Z_MAX = 25.0f;
+
+        if (camera.Position.x < X_MIN) camera.Position.x = X_MIN;
+        if (camera.Position.x > X_MAX) camera.Position.x = X_MAX;
+        if (camera.Position.z < Z_MIN) camera.Position.z = Z_MIN;
+        if (camera.Position.z > Z_MAX) camera.Position.z = Z_MAX;
+
+        const float MIN_Y =  -0.3f;
+        const float MAX_Y =  20.0f;
+        if (camera.Position.y < MIN_Y) camera.Position.y = MIN_Y;
+        if (camera.Position.y > MAX_Y) camera.Position.y = MAX_Y;
+
         camera.LOOKAT = camera.Position + camera.Front;
     }
 }

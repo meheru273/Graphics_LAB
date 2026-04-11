@@ -14,7 +14,9 @@
 #include "sphere.h"
 #include "sphereWithTexture.h"
 #include "BanyanTree.h"
+#include "MiniBanyanForest.h"
 #include "CircusTent.h"
+#include "lamppost.h"
 #include "stb_image.h"
 
 #include <iostream>
@@ -41,7 +43,7 @@ void BalloonBunch(Shader ourShader, glm::mat4 moveMatrix);
 void FlagBunting(Shader ourShader, glm::mat4 moveMatrix, float length);
 void VendorCart(Shader ourShader, glm::mat4 moveMatrix);
 void Well(Shader ourShader, glm::mat4 moveMatrix);
-void LampPost(Shader ourShader, glm::mat4 moveMatrix);
+void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix, unsigned int woodTex, unsigned int plainTex, unsigned int signTex, float time);
 void load_texture(unsigned int& texture, string image_name, GLenum format);
 unsigned int loadTexture(char const* path, GLenum textureWrappingModeS, GLenum textureWrappingModeT, GLenum textureFilteringModeMin, GLenum textureFilteringModeMax);
 void SetupPointLight(PointLight &pointLight, Shader ourShader, int lightNum);
@@ -337,7 +339,7 @@ std::vector<float> generateCanopyControlPoints() {
 
 // Textures
 unsigned int texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9,texture10,garden2,garden1,whiteflower,shoptex,bambooTex;
-unsigned int barkTex, leafTex, brickTex2;
+unsigned int barkTex, leafTex, brickTex2, signTex;
 
 bool textureOn = false;
 // Skybox
@@ -449,6 +451,7 @@ int main()
     Shader ourShader("shaders/vertexShader.vs", "shaders/fragmentShader.fs");
     Shader lightCubeShader("shaders/lightVertexShader.vs", "shaders/lightFragmentShader.fs");
     Shader skyboxShader("shaders/skybox.vert", "shaders/skybox.frag");
+    Shader instancedShader("shaders/vertexShaderInstanced.vs", "shaders/fragmentShader.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -795,6 +798,7 @@ int main()
     load_texture(barkTex,   "textures/bark.jpg",        GL_RGB);
     load_texture(leafTex,   "textures/leaf.png",        GL_RGBA);
     load_texture(brickTex2, "textures/brickwall_2.jpg", GL_RGB);
+    load_texture(signTex,   "textures/village_fare.png", GL_RGBA);
 
 
     //unsigned int footballMap = loadTexture(footballPath.c_str(), GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
@@ -852,6 +856,10 @@ unsigned int canopyVAO = hollowBezier(
     // Build banyan tree geometry (done once before the render loop)
     BanyanTree banyanTree;
     banyanTree.build();
+
+    // Build instanced mini-banyan forest (800 trees outside fairground)
+    MiniBanyanForest miniBanyanForest;
+    miniBanyanForest.build(22.0f, 200.0f, 800);
 
     // Build circus tent (uses global circusTent)
     circusTent.build();
@@ -1052,6 +1060,13 @@ unsigned int canopyVAO = hollowBezier(
         //Setting up Camera and Others
         ourShader.setVec3("viewPos", camera.Position);
         ourShader.setBool("lightingOn", lightingOn);
+
+        // ── Fog uniforms (main shader) ─────────────────
+        ourShader.setBool("fogEnabled", true);
+        ourShader.setVec3("fogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
+                                           : glm::vec3(0.55f, 0.70f, 0.85f));
+        ourShader.setFloat("fogStart", 60.0f);
+        ourShader.setFloat("fogEnd",   250.0f);
 
         //cout << camera.Position[0] << " " << camera.Position[1] << " " << camera.Position[2] << endl;
 
@@ -1260,46 +1275,41 @@ unsigned int canopyVAO = hollowBezier(
 
         // ================================================================
         //  LAMP POSTS — along inner edges of roads
+        //  Each drawLampPost call draws the stand AND its glowing bulb
+        //  sphere at the arm tip, so no separate bulb placement is needed.
         // ================================================================
         glBindTexture(GL_TEXTURE_2D, texture0);
         // Left road inner edge (X≈-12)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, 5.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, -1.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, -7.0f));
-        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, -0.42f, 5.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, -0.42f, -1.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, -0.42f, -7.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
         // Right road inner edge (X≈+10)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, 5.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, -1.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, -7.0f));
-        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, -0.42f, 5.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, -0.42f, -1.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, -0.42f, -7.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
         // Bottom road inner edge (Z≈-11)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-6.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-6.0f, -0.42f, -11.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, -0.42f, -11.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.0f, -0.42f, -11.0f));
+        drawLampPost(ourShader, lightCubeShader, lamp, view, projection, translateMatrix);
 
         // ================================================================
-        //  FLAG BUNTING — outermost perimeter boundary
+        //  FENCE BOUNDARY — grounded posts, rope, bunting + entrance gate
         // ================================================================
-        glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
-        // Bottom edge (along X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, -19.0f));
-        FlagBunting(ourShader, translateMatrix, 38.0f);
-        // Top edge (along X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix, 38.0f);
-        // Left edge (along Z, rotated)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix * rotY90, 34.0f);
-        // Right edge (along Z, rotated)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(18.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix * rotY90, 34.0f);
+        {
+            float currentTime = (float)glfwGetTime();
+            drawFenceBoundary(ourShader, identityMatrix,
+                              bambooTex, texture0, signTex, currentTime);
+            glBindVertexArray(cubeVAO);
+        }
 
         // ================================================================
         //  MISC PROPS
@@ -1347,48 +1357,66 @@ unsigned int canopyVAO = hollowBezier(
         treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(9.0f, 0.0f, 9.0f));
         drawRealisticTree(ourShader, treeModel, trunkVAO, canopyVAO, trunkIndices, canopyIndices);
 
+        // ================================================================
+        //  INSTANCED MINI-BANYAN FOREST — outside fairground perimeter
+        // ================================================================
+        {
+            instancedShader.use();
+            instancedShader.setMat4("view", view);
+            instancedShader.setMat4("projection", projection);
+
+            // Copy lighting uniforms to instanced shader
+            instancedShader.setVec3("viewPos", camera.Position);
+            instancedShader.setBool("lightingOn", lightingOn);
+
+            // Fog
+            instancedShader.setBool("fogEnabled", true);
+            instancedShader.setVec3("fogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
+                                                     : glm::vec3(0.55f, 0.70f, 0.85f));
+            instancedShader.setFloat("fogStart", 40.0f);
+            instancedShader.setFloat("fogEnd",   180.0f);
+
+            // Directional light for forest
+            directionalLight.setUpLight(instancedShader);
+            // Point lights (minimal influence at distance, but set for correctness)
+            SetupPointLight(pointLight1, instancedShader, 1);
+            SetupPointLight(pointLight2, instancedShader, 2);
+            SetupPointLight(pointLight3, instancedShader, 3);
+            SetupPointLight(pointLight4, instancedShader, 4);
+            // Spot light
+            spotLight.setUpLight(instancedShader);
+            instancedShader.setBool("circusLightsOn", false);
+
+            miniBanyanForest.draw(instancedShader, barkTex, leafTex);
+
+            // Switch back to main shader
+            ourShader.use();
+            glBindVertexArray(cubeVAO);
+        }
+
         //********* END of Object Making **********
 
-        //Lights
+        // Lights
+        //
+        // The lamppost bulbs are drawn by drawLampPost() itself, so we
+        // only emit a visualization sphere for the spot light (index 5).
+        // The stale lightPositions[1..4] point-light spheres were removed
+        // — they used hardcoded positions that did not match anything in
+        // the scene and visually looked like displaced bulbs on the ground.
         lightCubeShader.use();
         scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.13f, 0.1f, 0.13f));
-
-        for (int i = 1; i <= 5; i++)
         {
-
-            /*glm::vec3 lightColor;
-            lightColor.x = sin(glfwGetTime() * 1.0f);
-            lightColor.y = sin(glfwGetTime() * 0.35f);
-            lightColor.z = sin(glfwGetTime() * 0.7f);
-            glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-            lightCubeShader.setVec4("bodyColor", glm::vec4(diffuseColor, 1.0f));*/
-
-            glm::vec4 bodyColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-            //emissive
-            glm::vec3 val = glm::vec3(0.5f);
-            if (i == 1 and pointLightOn[0] == 0.0)
-                bodyColor = glm::vec4(val, 1.0f);
-            if (i == 2 and pointLightOn[1] == 0.0)
-                bodyColor = glm::vec4(val, 1.0f);
-            if (i == 3 and pointLightOn[2] == 0.0)
-                bodyColor = glm::vec4(val, 1.0f);
-            if (i == 4 and pointLightOn[3] == 0.0)
-                bodyColor = glm::vec4(val, 1.0f);
-            if (i == 5 and spotLightOn == 0.0)
-                bodyColor = glm::vec4(val, 1.0f);
-
-
+            glm::vec4 bodyColor = (spotLightOn == 0.0f)
+                ? glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+                : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
             lightCubeShader.setVec4("bodyColor", bodyColor);
             glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
             lightCubeShader.setMat4("projection", projection);
             glm::mat4 view = camera.GetViewMatrix();
             lightCubeShader.setMat4("view", view);
-            glm::mat4 tempModel = glm::mat4(1.0f);
-            tempModel = glm::translate(tempModel, lightPositions[i]);
+            glm::mat4 tempModel = glm::translate(identityMatrix, lightPositions[5]);
             lightCubeShader.setMat4("model", tempModel * scaleMatrix);
             lamp.drawSphere(lightCubeShader);
-
         }
 
 
@@ -1453,4 +1481,5 @@ unsigned int canopyVAO = hollowBezier(
 #include "src/shops2.h"
 #include "src/shops3.h"
 #include "src/draw_umbrella.h"
+#include "src/draw_boundary.h"
 

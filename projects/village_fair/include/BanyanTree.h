@@ -215,9 +215,9 @@ struct BanyanTree {
         cylVAO  = banyan_makeCylinderVAO(14, cylVBO, cylEBO, cylIndexCount);
         leafVAO = banyan_makeLeafVAO(leafVBO, leafEBO);
 
-        // Trunk: radius 0.40, height 2.8, fractal depth 5
+        // Trunk: radius 0.40, height 1.9, fractal depth 5 (shortened)
         banyan_bakeBranch(branches, leaves,
-            glm::mat4(1.0f), 5, 2.8f, 0.40f, 7u);
+            glm::mat4(1.0f), 5, 1.9f, 0.40f, 7u);
     }
 
     // Call once per frame inside the render loop.
@@ -272,10 +272,10 @@ struct BanyanTree {
     void drawPlatform(Shader& shader, const glm::vec3& worldPos, float worldScale,
                       unsigned int brickTex) const
     {
-        // Disk: radius = 1.5 * trunk radius (0.40) * worldScale, height = 0.18 world units
-        // Disk sits ON the ground — bottom at worldPos.y, ~0.22 units tall, radius ~1.2 world units
+        // Disk: acts as a seating area around the tree base.
+        // ~1.2 world units wide, ~0.55 world units tall (seat height) regardless of tree scale.
         float diskR = 2.8f / worldScale;     // ~1.2 world units wide regardless of tree scale
-        float diskH = 0.22f / worldScale;    // ~0.22 world units tall
+        float diskH = 0.55f / worldScale;    // ~0.55 world units tall (seat height)
 
         glm::mat4 m =
             glm::translate(glm::mat4(1.0f), worldPos) *       // ground level

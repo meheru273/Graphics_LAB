@@ -74,22 +74,30 @@ struct PondMesh {
     void updateWaves(float time, float radiusX, float radiusZ, int rings, int slices)
     {
         std::vector<float> vertices;
+        // Centre vertex — small bob only, no wave gaps since there's nothing
+        // to line up with at the centre.
         float cy = 0.02f * sinf(time * 2.0f);
         vertices.push_back(0.0f); vertices.push_back(cy); vertices.push_back(0.0f);
         vertices.push_back(0.0f); vertices.push_back(1.0f); vertices.push_back(0.0f);
 
         for (int r = 1; r <= rings; ++r) {
             float t = (float)r / rings;
+            // Envelope that is 1 at the centre and 0 at the edge, so the
+            // outermost ring of vertices does not move and can't open up
+            // gaps between the pond surface and the surrounding ground /
+            // boundary ring.
+            float envelope = (1.0f - t) * (1.0f - t);
             for (int s = 0; s < slices; ++s) {
                 float theta = 2.0f * 3.14159265f * s / slices;
                 float x = t * radiusX * cosf(theta);
                 float z = t * radiusZ * sinf(theta);
-                float wave = t * 0.08f * sinf(x * 1.5f + time * 3.0f)
-                           + t * 0.05f * sinf(z * 2.0f + time * 2.5f + 1.3f)
-                           + t * 0.03f * cosf((x + z) * 1.0f + time * 4.0f);
+                float wave = envelope * (
+                      0.08f * sinf(x * 1.5f + time * 3.0f)
+                    + 0.05f * sinf(z * 2.0f + time * 2.5f + 1.3f)
+                    + 0.03f * cosf((x + z) * 1.0f + time * 4.0f));
                 vertices.push_back(x); vertices.push_back(wave); vertices.push_back(z);
-                float nx = -t * 0.08f * 1.5f * cosf(x * 1.5f + time * 3.0f);
-                float nz = -t * 0.05f * 2.0f * cosf(z * 2.0f + time * 2.5f + 1.3f);
+                float nx = -envelope * 0.08f * 1.5f * cosf(x * 1.5f + time * 3.0f);
+                float nz = -envelope * 0.05f * 2.0f * cosf(z * 2.0f + time * 2.5f + 1.3f);
                 float len = sqrtf(nx * nx + 1.0f + nz * nz);
                 vertices.push_back(nx / len); vertices.push_back(1.0f / len); vertices.push_back(nz / len);
             }
@@ -120,18 +128,33 @@ static void _drawPondWater(Shader& shader, glm::mat4 moveMatrix, float time)
     pondMesh.updateWaves(time, POND_RX, POND_RZ, POND_RINGS, POND_SLICES);
     shader.setMat4("model", moveMatrix);
     float shimmer = 0.04f * sinf(time * 1.5f);
-    glm::vec4 waterColor(0.05f + shimmer, 0.25f + shimmer, 0.75f - shimmer, 1.0f);
-    shader.setVec4("material.ambient",  waterColor * 0.4f);
+    // Semi-transparent water (alpha = 0.72) so submerged hull is visible
+    glm::vec4 waterColor(0.05f + shimmer, 0.25f + shimmer, 0.75f - shimmer, 0.72f);
+    shader.setVec4("material.ambient",  glm::vec4(glm::vec3(waterColor) * 0.4f, waterColor.a));
     shader.setVec4("material.diffuse",  waterColor);
-    shader.setVec4("material.specular", glm::vec4(0.8f, 0.8f, 0.9f, 1.0f));
+    shader.setVec4("material.specular", glm::vec4(0.8f, 0.8f, 0.9f, waterColor.a));
     shader.setFloat("material.shininess", 96.0f);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);  // don't write to depth buffer for transparency
+
     glBindVertexArray(pondMesh.VAO);
     glDrawElements(GL_TRIANGLES, pondMesh.indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 // ──────────────────────────────────────────────────────────────
-//  Draw wooden deck at pond edge
+//  Draw wooden deck at pond edge.
+//
+//  Placed on the -Z side of the pond (the tree side). All Z
+//  coordinates are the mirror of the original +Z layout:
+//    platform:  Z ∈ [-5.0, -3.5]  (straddles pond -Z edge at -4)
+//    posts:     Z = -3.7 (pond-facing) and -4.8 (outer)
+//    rails:     mirrored to match
 // ──────────────────────────────────────────────────────────────
 static void _drawDeck(Shader& shader, glm::mat4 moveMatrix)
 {
@@ -139,8 +162,8 @@ static void _drawDeck(Shader& shader, glm::mat4 moveMatrix)
     glm::mat4 T, S, model;
     glm::vec4 woodColor(0.45f, 0.28f, 0.12f, 1.0f);
 
-    // Main platform
-    T = glm::translate(I, glm::vec3(-2.0f, 0.05f, POND_RZ - 0.5f));
+    // Main platform — spans X ∈ [-2, 2], Z ∈ [-5.0, -3.5].
+    T = glm::translate(I, glm::vec3(-2.0f, 0.05f, -(POND_RZ + 1.0f)));
     S = glm::scale(I, glm::vec3(8.0f, 0.15f, 3.0f));
     model = T * S;
     shader.setMat4("model", moveMatrix * model);
@@ -151,10 +174,12 @@ static void _drawDeck(Shader& shader, glm::mat4 moveMatrix)
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Posts
+    // Posts — two at the pond-facing edge (Z = -3.7), two at the outer
+    // edge (Z = -4.8).
     glm::vec4 postColor(0.35f, 0.20f, 0.08f, 1.0f);
     float px[] = { -1.8f, 1.8f, -1.8f, 1.8f };
-    float pz[] = { POND_RZ - 0.3f, POND_RZ - 0.3f, POND_RZ + 0.8f, POND_RZ + 0.8f };
+    float pz[] = { -(POND_RZ - 0.3f), -(POND_RZ - 0.3f),
+                   -(POND_RZ + 0.8f), -(POND_RZ + 0.8f) };
     for (int i = 0; i < 4; ++i) {
         T = glm::translate(I, glm::vec3(px[i], -0.42f, pz[i]));
         S = glm::scale(I, glm::vec3(0.2f, 1.0f, 0.2f));
@@ -169,17 +194,17 @@ static void _drawDeck(Shader& shader, glm::mat4 moveMatrix)
     glm::vec4 railColor(0.50f, 0.32f, 0.15f, 1.0f);
     shader.setVec4("material.ambient",  railColor * 0.5f);
     shader.setVec4("material.diffuse",  railColor);
-    // Left
-    T = glm::translate(I, glm::vec3(-2.0f, 0.15f, POND_RZ - 0.3f));
+    // Left side rail — runs along -Z at X = -2
+    T = glm::translate(I, glm::vec3(-2.0f, 0.15f, -(POND_RZ + 1.2f)));
     S = glm::scale(I, glm::vec3(0.1f, 0.6f, 3.0f));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    // Right
-    T = glm::translate(I, glm::vec3(1.9f, 0.15f, POND_RZ - 0.3f));
+    // Right side rail
+    T = glm::translate(I, glm::vec3(1.9f, 0.15f, -(POND_RZ + 1.2f)));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    // Front
-    T = glm::translate(I, glm::vec3(-2.0f, 0.15f, POND_RZ - 0.3f));
+    // Far-edge rail (away from pond, at Z = -5.0)
+    T = glm::translate(I, glm::vec3(-2.0f, 0.15f, -(POND_RZ + 1.05f)));
     S = glm::scale(I, glm::vec3(8.0f, 0.6f, 0.1f));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -188,17 +213,29 @@ static void _drawDeck(Shader& shader, glm::mat4 moveMatrix)
 }
 
 // ──────────────────────────────────────────────────────────────
-//  Pirate Ship — recentered to local origin (0,0,0)
-//  Original pivot was (14, 2, 4.2), now at (0, 2, 0).
-//  All coordinates shifted by (-14, 0, -4.2)
+//  Pirate Ship ride.
+//
+//  Structure:
+//    • A static A-frame (two tall vertical posts + a horizontal
+//      crossbar at the top) straddles the ship on the X axis. It
+//      does NOT swing.
+//    • Two hanging arms drop from the crossbar down to the hull.
+//      They swing around the pivot line at y = 2.2 along with the
+//      hull / base, giving the visual of the ship being held by
+//      the frame from above.
+//    • Hull and base hang at the bottom of the arms.
+//
+//  Pivot is (0, 2.2, *) — the Z component doesn't matter because
+//  we rotate around the Z axis. All coordinates are in pond-local
+//  space; the caller applies moveMatrix.
 // ──────────────────────────────────────────────────────────────
 static void _drawPirateShip(Shader& shader, glm::mat4 moveMatrix)
 {
     glm::mat4 I = glm::mat4(1.0f);
-    glm::mat4 T, S, model, rotZ, rotTemp;
+    glm::mat4 T, S, model;
 
-    // Pivot at local (0, 2, 0)
-    glm::vec4 pivot = glm::vec4(0.0f, 2.0f, 0.0f, 1.0f);
+    // Pivot axis at local (0, 2.2, 0)
+    glm::vec4 pivot = glm::vec4(0.0f, 2.2f, 0.0f, 1.0f);
     glm::mat4 toPivot   = glm::translate(I, glm::vec3(-pivot));
     glm::mat4 fromPivot = glm::translate(I, glm::vec3(pivot));
 
@@ -220,69 +257,86 @@ static void _drawPirateShip(Shader& shader, glm::mat4 moveMatrix)
         if (boatAngle > 0) boatAngle -= abs(boatSpeed);
     }
 
-    rotZ = glm::rotate(I, glm::radians(boatAngle), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 rotZ  = glm::rotate(I, glm::radians(boatAngle), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 swing = fromPivot * rotZ * toPivot;
 
-    // ---- Boat hull (bezier mesh) ----
-    // Original: (14, -1.18, 7) → local: (0, -1.18, 2.8)
-    glm::vec4 color = glm::vec4(1.0f, 10.0f/256, 20.0f/256, 1.0f);
+    // ── STATIC A-FRAME ─────────────────────────────────────────────
+    // These three cubes do NOT get the swing transform — the frame
+    // stays still while the ship rocks inside it.
+    glBindTexture(GL_TEXTURE_2D, texture0);
+    glBindVertexArray(cubeVAO);
+    glm::vec4 frameColor(0.45f, 0.28f, 0.12f, 1.0f);
+    shader.setVec4("material.ambient",  frameColor * 0.5f);
+    shader.setVec4("material.diffuse",  frameColor);
+    shader.setVec4("material.specular", glm::vec4(0.2f, 0.15f, 0.1f, 1.0f));
+    shader.setFloat("material.shininess", 32.0f);
+
+    // Left vertical post — size 0.2 × 2.62 × 0.2, centred at (-2.5, 0.89, 2.8)
+    T = glm::translate(I, glm::vec3(-2.6f, -0.42f, 2.7f));
+    S = glm::scale(I, glm::vec3(0.4f, 5.24f, 0.4f));
+    shader.setMat4("model", moveMatrix * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Right vertical post — size 0.2 × 2.62 × 0.2, centred at (2.5, 0.89, 2.8)
+    T = glm::translate(I, glm::vec3(2.4f, -0.42f, 2.7f));
+    shader.setMat4("model", moveMatrix * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Top crossbar — size 5.4 × 0.15 × 0.15, centred at (0, 2.275, 2.8)
+    T = glm::translate(I, glm::vec3(-2.7f, 2.2f, 2.725f));
+    S = glm::scale(I, glm::vec3(10.8f, 0.3f, 0.3f));
+    shader.setMat4("model", moveMatrix * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── SWINGING HANGING ARMS ──────────────────────────────────────
+    // Size 0.08 × 3.2 × 0.08. Top at y = 2.2 (pivot line), bottom at
+    // y = -1.0 — so the top sits inside the crossbar and the bottom
+    // reaches the hull below.
+    glm::vec4 armColor(0.55f, 0.35f, 0.15f, 1.0f);
+    shader.setVec4("material.ambient",  armColor * 0.5f);
+    shader.setVec4("material.diffuse",  armColor);
+    shader.setVec4("material.specular", glm::vec4(0.2f));
+    shader.setFloat("material.shininess", 32.0f);
+
+    // Left arm — centred at (-0.4, 0.6, 2.8)
+    T = glm::translate(I, glm::vec3(-0.44f, -1.0f, 2.76f));
+    S = glm::scale(I, glm::vec3(0.16f, 6.4f, 0.16f));
+    model = swing * T * S;
+    shader.setMat4("model", moveMatrix * model);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Right arm — centred at (0.4, 0.6, 2.8)
+    T = glm::translate(I, glm::vec3(0.36f, -1.0f, 2.76f));
+    model = swing * T * S;
+    shader.setMat4("model", moveMatrix * model);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── BOAT HULL (bezier mesh) ────────────────────────────────────
+    // Hangs below the arms and swings with them.
+    glm::vec4 color(1.0f, 10.0f/256, 20.0f/256, 1.0f);
     glBindTexture(GL_TEXTURE_2D, texture3);
     T = glm::translate(I, glm::vec3(0.0f, -1.18f, 2.8f));
     S = glm::scale(I, glm::vec3(0.7f, 0.7f, 0.3f));
-    model = fromPivot * rotZ * toPivot * T * S;
+    model = swing * T * S;
     shader.setMat4("model", moveMatrix * model);
-    shader.setVec4("material.ambient", color);
-    shader.setVec4("material.diffuse", color * 0.5f);
+    shader.setVec4("material.ambient",  color);
+    shader.setVec4("material.diffuse",  color * 0.5f);
     shader.setVec4("material.specular", color);
     shader.setFloat("material.shininess", 256.0f);
     glBindVertexArray(boatVAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indicesBoat.size(), GL_UNSIGNED_INT, (void*)0);
-    glBindVertexArray(0);
 
-    // ---- Base (under the hull) ----
-    // Original: (14, -0.45, 7) → local: (0, -0.45, 2.8)
+    // ── Base (under the hull) ─────────────────────────────────────
     color = glm::vec4(150.0f/256, 12.0f/256, 35.0f/256, 1.0f);
     T = glm::translate(I, glm::vec3(0.0f, -0.45f, 2.8f));
     S = glm::scale(I, glm::vec3(0.55f, 0.2f, 0.248f));
-    model = fromPivot * rotZ * toPivot * T * S;
+    model = swing * T * S;
     shader.setMat4("model", moveMatrix * model);
-    shader.setVec4("material.ambient", color);
-    shader.setVec4("material.diffuse", color * 0.5f);
+    shader.setVec4("material.ambient",  color);
+    shader.setVec4("material.diffuse",  color * 0.5f);
     shader.setVec4("material.specular", color);
     shader.setFloat("material.shininess", 256.0f);
-    glBindVertexArray(boatVAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indicesBoat.size(), GL_UNSIGNED_INT, (void*)0);
-    glBindVertexArray(0);
-
-    // ---- Support bars ----
-    // Original bars offset: moveX=11, moveY=-0.4, moveZ=7.7
-    // Bar base coords: (2.975+11, 0.5-0.4, -1.2+7.7) = (13.975, 0.1, 6.5) → local: (-0.025, 0.1, 2.3)
-    glBindTexture(GL_TEXTURE_2D, texture0);
-    color = glm::vec4(1.0f);
-    shader.setVec4("material.ambient", color);
-    shader.setVec4("material.diffuse", color);
-    shader.setVec4("material.specular", color);
-    shader.setFloat("material.shininess", 256.0f);
-
-    // Offsets: original (moveX, moveY, moveZ) = (11, -0.4, 7.7)
-    // Shift: subtract (14, 0, 4.2) from final coords
-    float oX = -3.0f, oY = -0.4f, oZ = 3.5f; // = (11-14, -0.4, 7.7-4.2)
-    // Bar 1
-    T = glm::translate(I, glm::vec3(2.975f + oX, 0.5f + oY, -1.2f + oZ));
-    S = glm::scale(I, glm::vec3(0.1f, 0.1f, 1.95f));
-    model = fromPivot * rotZ * toPivot * T * S;
-    shader.setMat4("model", moveMatrix * model);
-    glBindVertexArray(cubeVAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    // Bar 2
-    T = glm::translate(I, glm::vec3(2.575f + oX, 0.5f + oY, -1.2f + oZ));
-    model = fromPivot * rotZ * toPivot * T * S;
-    shader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    // Bar 3
-    T = glm::translate(I, glm::vec3(3.375f + oX, 0.5f + oY, -1.2f + oZ));
-    model = fromPivot * rotZ * toPivot * T * S;
-    shader.setMat4("model", moveMatrix * model);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
 }
@@ -293,91 +347,236 @@ static void _drawPirateShip(Shader& shader, glm::mat4 moveMatrix)
 static void _drawDockBoat(Shader& shader, glm::mat4 moveMatrix, float time)
 {
     glm::mat4 I = glm::mat4(1.0f);
+    glm::mat4 T, S;
 
-    float boatX = 0.0f;
-    float boatZ = POND_RZ - 1.5f;
-    float bobY  = 0.04f * sinf(time * 2.5f) + 0.02f * sinf(time * 1.7f + 0.5f);
-    float roll  = 3.0f * sinf(time * 1.8f + 0.3f);
-    float yaw   = 2.0f * sinf(time * 0.7f);
+    // ── Centered in the pond, floating at water level ────────────
+    float bobY = 0.03f * sinf(time * 2.5f) + 0.015f * sinf(time * 1.7f + 0.5f);
+    float roll = 1.5f * sinf(time * 1.8f + 0.3f);
+    float yaw  = 1.2f * sinf(time * 0.7f);
 
-    glm::mat4 boatModel = glm::translate(I, glm::vec3(boatX, -0.25f + bobY, boatZ));
+    // Boat floating ON the water — only hull bottom dips below surface
+    glm::mat4 boatModel = glm::translate(I, glm::vec3(0.0f, 0.08f + bobY, 0.0f));
     boatModel = glm::rotate(boatModel, glm::radians(yaw), glm::vec3(0,1,0));
     boatModel = glm::rotate(boatModel, glm::radians(roll), glm::vec3(0,0,1));
 
-    // Hull
-    glm::vec4 hullColor(0.6f, 0.15f, 0.05f, 1.0f);
-    glm::mat4 hullS = glm::scale(I, glm::vec3(0.5f, 0.4f, 0.25f));
-    shader.setMat4("model", moveMatrix * boatModel * hullS);
-    shader.setVec4("material.ambient",  hullColor * 0.4f);
-    shader.setVec4("material.diffuse",  hullColor);
-    shader.setVec4("material.specular", glm::vec4(0.3f, 0.2f, 0.1f, 1.0f));
-    shader.setFloat("material.shininess", 32.0f);
-    glBindVertexArray(boatVAO);
-    glDrawElements(GL_TRIANGLES, (unsigned int)indicesBoat.size(), GL_UNSIGNED_INT, (void*)0);
-    glBindVertexArray(0);
+    // Boat dimensions — elongated hull (length >> width)
+    const float HULL_LEN = 4.0f;    // long boat
+    const float HULL_WID = 1.0f;    // narrow
+    const float HULL_H   = 0.15f;   // shallow draft (only this goes underwater)
+    const float WALL_H   = 0.35f;
+    const float WALL_T   = 0.06f;
+    const float FRAME_T  = 0.04f;
 
     glBindVertexArray(cubeVAO);
-    // Seat plank
-    glm::vec4 seatC(0.55f, 0.35f, 0.15f, 1.0f);
-    shader.setMat4("model", moveMatrix * boatModel *
-        glm::translate(I, glm::vec3(-0.3f, 0.1f, -0.15f)) *
-        glm::scale(I, glm::vec3(1.2f, 0.08f, 0.6f)));
-    shader.setVec4("material.ambient",  seatC * 0.5f);
-    shader.setVec4("material.diffuse",  seatC);
-    shader.setVec4("material.specular", glm::vec4(0.1f));
-    shader.setFloat("material.shininess", 16.0f);
+
+    // ── HULL BOTTOM (submerged under water) ─────────────────────
+    glm::vec4 hullColor(0.50f, 0.14f, 0.04f, 1.0f);
+    shader.setVec4("material.ambient",  hullColor * 0.4f);
+    shader.setVec4("material.diffuse",  hullColor);
+    shader.setVec4("material.specular", glm::vec4(0.20f, 0.12f, 0.06f, 1.0f));
+    shader.setFloat("material.shininess", 24.0f);
+
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.5f, -HULL_H, -HULL_WID * 0.5f));
+    S = glm::scale(I, glm::vec3(HULL_LEN / 0.5f, HULL_H / 0.5f, HULL_WID / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Mast
-    glm::vec4 mastC(0.4f, 0.25f, 0.1f, 1.0f);
-    shader.setMat4("model", moveMatrix * boatModel *
-        glm::translate(I, glm::vec3(0.0f, 0.1f, -0.05f)) *
-        glm::scale(I, glm::vec3(0.06f, 1.8f, 0.06f)));
+    // ── FLOOR / DECK (covers the inside, no gap!) ───────────────
+    glm::vec4 floorColor(0.48f, 0.30f, 0.12f, 1.0f);
+    shader.setVec4("material.ambient",  floorColor * 0.45f);
+    shader.setVec4("material.diffuse",  floorColor);
+    shader.setVec4("material.specular", glm::vec4(0.10f));
+    shader.setFloat("material.shininess", 10.0f);
+
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.5f + WALL_T, -0.02f, -HULL_WID * 0.5f + WALL_T));
+    S = glm::scale(I, glm::vec3((HULL_LEN - 2.0f * WALL_T) / 0.5f,
+                                 0.04f / 0.5f,
+                                 (HULL_WID - 2.0f * WALL_T) / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── SIDE WALLS ────────────────────────────────────────────
+    glm::vec4 wallColor(0.55f, 0.30f, 0.10f, 1.0f);
+    shader.setVec4("material.ambient",  wallColor * 0.4f);
+    shader.setVec4("material.diffuse",  wallColor);
+    shader.setVec4("material.specular", glm::vec4(0.12f, 0.08f, 0.04f, 1.0f));
+    shader.setFloat("material.shininess", 16.0f);
+
+    // Left wall (-Z side)
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.5f, 0.0f, -HULL_WID * 0.5f));
+    S = glm::scale(I, glm::vec3(HULL_LEN / 0.5f, WALL_H / 0.5f, WALL_T / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Right wall (+Z side)
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.5f, 0.0f, HULL_WID * 0.5f - WALL_T));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Back wall (+X side, stern) — full width
+    T = glm::translate(I, glm::vec3(HULL_LEN * 0.5f - WALL_T, 0.0f, -HULL_WID * 0.5f));
+    S = glm::scale(I, glm::vec3(WALL_T / 0.5f, WALL_H / 0.5f, HULL_WID / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // BOW (tapered front) — two angled side pieces to create a V-shape
+    // Left bow piece
+    glm::mat4 bowL = boatModel *
+        glm::translate(I, glm::vec3(-HULL_LEN * 0.5f, 0.0f, -HULL_WID * 0.15f)) *
+        glm::rotate(I, glm::radians(-25.0f), glm::vec3(0,1,0));
+    T = glm::translate(I, glm::vec3(0.0f, 0.0f, 0.0f));
+    S = glm::scale(I, glm::vec3(WALL_T / 0.5f, WALL_H / 0.5f, (HULL_WID * 0.45f) / 0.5f));
+    shader.setMat4("model", moveMatrix * bowL * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Right bow piece
+    glm::mat4 bowR = boatModel *
+        glm::translate(I, glm::vec3(-HULL_LEN * 0.5f, 0.0f, HULL_WID * 0.15f)) *
+        glm::rotate(I, glm::radians(25.0f), glm::vec3(0,1,0));
+    T = glm::translate(I, glm::vec3(0.0f, 0.0f, -HULL_WID * 0.45f + WALL_T));
+    S = glm::scale(I, glm::vec3(WALL_T / 0.5f, WALL_H / 0.5f, (HULL_WID * 0.45f) / 0.5f));
+    shader.setMat4("model", moveMatrix * bowR * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── FRAME BEAMS (top rail around the boat) ─────────────────
+    glm::vec4 frameColor(0.40f, 0.22f, 0.08f, 1.0f);
+    shader.setVec4("material.ambient",  frameColor * 0.5f);
+    shader.setVec4("material.diffuse",  frameColor);
+    shader.setVec4("material.specular", glm::vec4(0.10f));
+    shader.setFloat("material.shininess", 10.0f);
+
+    // Long beams (along X, top of left/right walls)
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.35f, WALL_H, -HULL_WID * 0.5f));
+    S = glm::scale(I, glm::vec3((HULL_LEN * 0.85f) / 0.5f, FRAME_T / 0.5f, FRAME_T / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    T = glm::translate(I, glm::vec3(-HULL_LEN * 0.35f, WALL_H, HULL_WID * 0.5f - FRAME_T));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Back beam (stern, along Z)
+    T = glm::translate(I, glm::vec3(HULL_LEN * 0.5f - FRAME_T, WALL_H, -HULL_WID * 0.5f));
+    S = glm::scale(I, glm::vec3(FRAME_T / 0.5f, FRAME_T / 0.5f, HULL_WID / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── TWO BENCHES (cross-planks inside) ─────────────────────
+    glm::vec4 benchColor(0.50f, 0.33f, 0.14f, 1.0f);
+    shader.setVec4("material.ambient",  benchColor * 0.5f);
+    shader.setVec4("material.diffuse",  benchColor);
+    shader.setVec4("material.specular", glm::vec4(0.08f));
+    shader.setFloat("material.shininess", 8.0f);
+
+    float benchW = HULL_WID - 2.0f * WALL_T - 0.10f;
+    // Bench near middle
+    T = glm::translate(I, glm::vec3(-0.15f, 0.02f, -benchW * 0.5f));
+    S = glm::scale(I, glm::vec3(0.30f / 0.5f, 0.10f / 0.5f, benchW / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // Bench near stern
+    T = glm::translate(I, glm::vec3(HULL_LEN * 0.30f, 0.02f, -benchW * 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    // ── MAST (thin pole, 25% of previous thickness) ─────────────
+    glm::vec4 mastC(0.35f, 0.20f, 0.08f, 1.0f);
     shader.setVec4("material.ambient",  mastC * 0.5f);
     shader.setVec4("material.diffuse",  mastC);
+    T = glm::translate(I, glm::vec3(-0.015f, 0.02f, -0.015f));
+    S = glm::scale(I, glm::vec3(0.06f / 0.5f, 1.6f / 0.5f, 0.06f / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Flag
-    float flagWave = 0.15f * sinf(time * 5.0f);
-    glm::vec4 flagC(0.9f, 0.15f, 0.1f, 1.0f);
-    shader.setMat4("model", moveMatrix * boatModel *
-        glm::translate(I, glm::vec3(0.03f, 0.95f, -0.05f)) *
-        glm::scale(I, glm::vec3(0.5f + flagWave, 0.25f, 0.02f)));
+    // ── FLAG (thin fabric-like quad) ───────────────────────────
+    float flagWave = 0.08f * sinf(time * 5.0f);
+    glm::vec4 flagC(0.85f, 0.12f, 0.08f, 1.0f);
     shader.setVec4("material.ambient",  flagC * 0.5f);
     shader.setVec4("material.diffuse",  flagC);
-    shader.setVec4("material.specular", glm::vec4(0.1f));
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    // Rope
-    glm::vec4 ropeC(0.6f, 0.55f, 0.35f, 1.0f);
-    shader.setMat4("model", moveMatrix * boatModel *
-        glm::translate(I, glm::vec3(0.3f, 0.05f, 0.6f)) *
-        glm::scale(I, glm::vec3(0.03f, 0.03f, 1.5f)));
-    shader.setVec4("material.ambient",  ropeC * 0.5f);
-    shader.setVec4("material.diffuse",  ropeC);
+    shader.setVec4("material.specular", glm::vec4(0.05f));
+    T = glm::translate(I, glm::vec3(0.03f, 1.35f, -0.005f));
+    S = glm::scale(I, glm::vec3((0.45f + flagWave) / 0.5f, 0.22f / 0.5f, 0.01f / 0.5f));
+    shader.setMat4("model", moveMatrix * boatModel * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
 }
 
 // ──────────────────────────────────────────────────────────────
-//  PUBLIC: Draw everything — pond + pirate ship + deck + dock boat
+//  Pond boundary — a ring of stone-coloured cuboids placed tangent
+//  to the pond ellipse. Hides any residual gaps between the water
+//  surface and the surrounding terrain, and gives the pond a
+//  visible rim.
+// ──────────────────────────────────────────────────────────────
+static void _drawPondRim(Shader& shader, glm::mat4 moveMatrix)
+{
+    const glm::mat4 I = glm::mat4(1.0f);
+    const int   N        = 48;     // ring segments
+    const float rimH     = 0.50f;  // height
+    const float rimT     = 0.30f;  // thickness (inward/outward)
+    const float rimYMid  = 0.05f;  // vertical centre (local Y)
+
+    glBindVertexArray(cubeVAO);
+    glm::vec4 rimColor(0.38f, 0.30f, 0.22f, 1.0f); // dark stone / dirt
+    shader.setVec4("material.ambient",  rimColor * 0.5f);
+    shader.setVec4("material.diffuse",  rimColor);
+    shader.setVec4("material.specular", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+    shader.setFloat("material.shininess", 16.0f);
+
+    for (int i = 0; i < N; ++i) {
+        float t0 = 2.0f * 3.14159265f * (float)i       / (float)N;
+        float t1 = 2.0f * 3.14159265f * (float)(i + 1) / (float)N;
+        float x0 = POND_RX * cosf(t0), z0 = POND_RZ * sinf(t0);
+        float x1 = POND_RX * cosf(t1), z1 = POND_RZ * sinf(t1);
+        float mx = 0.5f * (x0 + x1);
+        float mz = 0.5f * (z0 + z1);
+        float dx = x1 - x0;
+        float dz = z1 - z0;
+        // Segment length gets a small overlap so neighbouring pieces
+        // meet with no visible seam.
+        float segLen = sqrtf(dx * dx + dz * dz) * 1.10f;
+        // Rotation around +Y so the cube's local +X aligns with the
+        // tangent (dx, dz). glm::rotate around (0,1,0) maps +X to
+        // (cosθ, 0, -sinθ), so we need θ = atan2(-dz, dx).
+        float angleY = atan2f(-dz, dx);
+
+        glm::mat4 M = glm::translate(I, glm::vec3(mx, rimYMid, mz))
+                    * glm::rotate(I, angleY, glm::vec3(0.0f, 1.0f, 0.0f))
+                    * glm::translate(I, glm::vec3(-segLen * 0.5f,
+                                                  -rimH   * 0.5f,
+                                                  -rimT   * 0.5f))
+                    * glm::scale(I, glm::vec3(2.0f * segLen,
+                                              2.0f * rimH,
+                                              2.0f * rimT));
+        shader.setMat4("model", moveMatrix * M);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    }
+    glBindVertexArray(0);
+}
+
+// ──────────────────────────────────────────────────────────────
+//  PUBLIC: Draw everything — pond + rim + pirate ship + deck + dock boat
 //  One moveMatrix controls the entire scene.
 // ──────────────────────────────────────────────────────────────
 void drawPondShipScene(Shader& shader, glm::mat4 moveMatrix, float time)
 {
-    // 1. Animated water surface
-    _drawPondWater(shader, moveMatrix, time);
+    // Draw ORDER matters for transparency:
+    // 1. All opaque geometry first
+    // 2. Semi-transparent water last
 
-    // 2. Pirate ship (swinging, in the middle of the pond)
-    glBindTexture(GL_TEXTURE_2D, texture3);
-    _drawPirateShip(shader, moveMatrix);
+    // 1. Stone rim (opaque)
+    glBindTexture(GL_TEXTURE_2D, texture0);
+    _drawPondRim(shader, moveMatrix);
 
-    // 3. Wooden deck
+    // 2. Wooden deck (opaque)
     glBindTexture(GL_TEXTURE_2D, texture3);
     _drawDeck(shader, moveMatrix);
 
-    // 4. Small dock boat (bobbing at edge)
+    // 3. Dock boat (opaque — hull partially submerged)
     glBindTexture(GL_TEXTURE_2D, texture0);
     _drawDockBoat(shader, moveMatrix, time);
+
+    // 4. Water surface LAST (semi-transparent, so submerged hull shows)
+    _drawPondWater(shader, moveMatrix, time);
 }

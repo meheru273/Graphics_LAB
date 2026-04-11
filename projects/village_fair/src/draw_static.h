@@ -980,57 +980,8 @@ void Gate(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
 
 }
 
-void LampPost(Shader ourShader, glm::mat4 moveMatrix)
-{
-    glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    glm::mat4 translateMatrix, scaleMatrix, model, rotateZMatrix;
-
-    //base
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(8.01f, -0.42f, 15.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.7f, 0.3f, 0.7f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glBindVertexArray(cubeVAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    //pillar
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(8.17f, -0.42f, 15.15f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.1f, 3.5f, 0.1f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient", glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
-    ourShader.setVec4("material.diffuse", glm::vec4(0.3f, 0.4f, 0.3f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.3f, 0.4f, 0.3f, 1.0f));
-    ourShader.setFloat("material.shininess", 32.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    // Lamp arm
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(8.17f, 1.3f, 15.15f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.3f, 0.05f, 0.05f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient",  glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
-    ourShader.setVec4("material.diffuse",  glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
-    ourShader.setFloat("material.shininess", 64.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    // Lamp head
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(8.42f, 1.25f, 15.12f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.15f, 0.12f, 0.15f));
-    model = translateMatrix * scaleMatrix;
-    ourShader.setMat4("model", moveMatrix * model);
-    ourShader.setVec4("material.ambient",  glm::vec4(0.95f, 0.90f, 0.50f, 1.0f));
-    ourShader.setVec4("material.diffuse",  glm::vec4(0.95f, 0.90f, 0.50f, 1.0f));
-    ourShader.setVec4("material.specular", glm::vec4(1.0f,  1.0f,  0.8f,  1.0f));
-    ourShader.setFloat("material.shininess", 128.0f);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-}
+// LampPost has been moved to include/lamppost.h as drawLampPost().
+// It is now a local-space object so callers pass a plain world transform.
 
 void Stage(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
 {
