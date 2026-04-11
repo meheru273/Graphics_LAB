@@ -92,7 +92,7 @@ float rotateAngleTest_Y = 0.0;
 
 
 // camera — entry view from bottom-left, facing toward fair center
-Camera camera(glm::vec3(-10.0f, 2.0f, -13.0f), glm::vec3(0,1,0), 52.0f, -10.0f);
+Camera camera(glm::vec3(-22.0f, 5.0f, -20.0f), glm::vec3(0,1,0), 42.0f, -12.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -281,7 +281,7 @@ float directionalLightOn = 1.0;
 // ---- Circus Tent globals (needed by callbacks.h) ----
 CircusTent circusTent;
 bool  g_insideTent  = false;
-glm::vec3 g_tentCenter = glm::vec3(-5.0f, -0.42f, -4.0f);
+glm::vec3 g_tentCenter = glm::vec3(-5.0f, -0.42f, -3.0f);
 float g_tentRadius  = 3.5f;
 float g_tentFloorY  = -0.42f + 0.1f;
 float g_tentCeilY   = -0.42f + 4.5f;
@@ -857,7 +857,7 @@ unsigned int canopyVAO = hollowBezier(
     circusTent.build();
 
     // Position the tent — bottom-left cell of 2x2 center grid
-    const glm::vec3 tentWorldPos = glm::vec3(-5.0f, -0.42f, -4.0f);
+    const glm::vec3 tentWorldPos = glm::vec3(-5.0f, -0.42f, -3.0f);
     const glm::mat4 tentModel    = glm::translate(glm::mat4(1.0f), tentWorldPos);
 
     // Reposition the 4 point lights to the tent corner pole tops
@@ -961,8 +961,8 @@ unsigned int canopyVAO = hollowBezier(
             // Stronger diffuse + lower ambient => visible shaded sides / clearer "shadows".
             float intensity = glm::clamp(h + 0.05f, 0.0f, 1.0f);
             directionalLight.direction = -sunDir;
-            directionalLight.ambient   = glm::vec4(sunColor * (0.06f + 0.04f * dayBlend), 1.0f);
-            directionalLight.diffuse   = glm::vec4(sunColor * intensity * 1.6f, 1.0f);
+            directionalLight.ambient   = glm::vec4(sunColor * (0.12f + 0.08f * dayBlend), 1.0f);
+            directionalLight.diffuse   = glm::vec4(sunColor * intensity * 2.2f, 1.0f);
             directionalLight.specular  = glm::vec4(sunColor * intensity * 0.8f, 1.0f);
 
             // Remember for drawing the visible sun disk later this frame.

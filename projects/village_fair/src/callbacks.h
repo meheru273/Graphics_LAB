@@ -89,9 +89,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             g_savedCamPos = camera.Position;
             g_savedYaw    = camera.Yaw;
             g_savedPitch  = camera.Pitch;
-            // Tent centre=(-5,-0.42,-4), entrance gap on +Z side (local +Z = world +Z)
+            // Tent centre=(-5,-0.42,-3), entrance gap on +Z side
             // Spawn just inside the entrance, look toward -Z (into tent interior)
-            camera.Position = glm::vec3(-5.0f, -0.42f + 1.6f, -4.0f + 2.5f);
+            camera.Position = glm::vec3(-5.0f, -0.42f + 1.6f, -3.0f + 2.5f);
             camera.Yaw   = -90.0f;  // -90° → front=(0,0,-1) → looking into tent
             camera.Pitch =  -8.0f;
             camera.updateCameraVectors();
