@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -26,7 +26,6 @@ using namespace std;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void Floor(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
@@ -54,7 +53,7 @@ void BezierCurve(double t, float xy[2], GLfloat ctrlpoints[], int L);
 unsigned int hollowBezier(GLfloat ctrlpoints[], int L, vector<float>& coordinates, vector<float>& normals, vector<int>& indices, vector<float>& vertices);
 void drawCurve(Shader ourShader, glm::mat4 moveMatrix, unsigned int VAO, vector<int> indices, glm::vec4 color = glm::vec4(1.0f), float rotateAngleTest_Y = 0);
 void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix);
-void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0, glm::mat4 parentMove = glm::mat4(1.0f));
+void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0);
 void PirateShip(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0);
 void drawKite(Shader& shader, glm::mat4 moveMatrix, glm::vec4 kiteColor, glm::vec4 barColor, float scale, glm::vec3 position);
 void drawJar(Shader& shader, glm::mat4 moveMatrix, glm::vec4 color, float radius, float height, int segments);
@@ -66,10 +65,6 @@ void garden(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Carousal(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0);
 
 void glass(Shader& ourShader, unsigned int& VAO, float tx, float ty, float tz, float sx, float sy, float sz);
-void drawShopRow1(Shader ourShader, glm::mat4 moveMatrix, bool useTexture);
-void drawShopRow2(Shader ourShader, glm::mat4 moveMatrix, bool useTexture);
-void drawShopRow3(Shader ourShader, glm::mat4 moveMatrix, bool useTexture);
-void drawUmbrella(Shader ourShader, glm::mat4 moveMatrix);
 // settings
 const unsigned int SCR_WIDTH = 1500;
 const unsigned int SCR_HEIGHT = 800;
@@ -91,8 +86,8 @@ float scale_Z = 1.0;
 float rotateAngleTest_Y = 0.0;
 
 
-// camera — entry view from bottom-left, facing toward fair center
-Camera camera(glm::vec3(-10.0f, 2.0f, -13.0f), glm::vec3(0,1,0), 52.0f, -10.0f);
+// camera               8.0   1.0   18.1
+Camera camera(glm::vec3(8.0f, 1.0f, 18.1f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -277,21 +272,6 @@ float specularOn = 1.0;
 bool dark = false;
 
 float directionalLightOn = 1.0;
-
-// ---- Circus Tent globals (needed by callbacks.h) ----
-CircusTent circusTent;
-bool  g_insideTent  = false;
-glm::vec3 g_tentCenter = glm::vec3(-5.0f, -0.42f, -4.0f);
-float g_tentRadius  = 3.5f;
-float g_tentFloorY  = -0.42f + 0.1f;
-float g_tentCeilY   = -0.42f + 4.5f;
-glm::vec3 g_savedCamPos = glm::vec3(0.0f);
-float g_savedYaw   = 0.0f;
-float g_savedPitch = 0.0f;
-
-// Pond module forward declarations
-void initPondShip();
-void drawPondShipScene(Shader& shader, glm::mat4 moveMatrix, float time);
 float pointLightOn[noOfPointLights] = { 0.0, 0.0, 0.0, 0.0 };
 float spotLightOn = 0.0;
 
@@ -426,7 +406,6 @@ int main()
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     // Keep cursor free so the user can resize/move the window.
     // Press Tab to toggle between free cursor and captured (FPS-look) mode.
@@ -853,11 +832,12 @@ unsigned int canopyVAO = hollowBezier(
     BanyanTree banyanTree;
     banyanTree.build();
 
-    // Build circus tent (uses global circusTent)
+    // Build circus tent
+    CircusTent circusTent;
     circusTent.build();
 
-    // Position the tent — bottom-left cell of 2x2 center grid
-    const glm::vec3 tentWorldPos = glm::vec3(-5.0f, -0.42f, -4.0f);
+    // Position the tent in world space â€” left interior area of the fair
+    const glm::vec3 tentWorldPos = glm::vec3(3.5f, -0.42f, 5.0f);
     const glm::mat4 tentModel    = glm::translate(glm::mat4(1.0f), tentWorldPos);
 
     // Reposition the 4 point lights to the tent corner pole tops
@@ -884,7 +864,6 @@ unsigned int canopyVAO = hollowBezier(
 
     // render loop
     // -----------
-    initPondShip(); // Initialize the bezier pond + pirate ship mesh
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -896,10 +875,6 @@ unsigned int canopyVAO = hollowBezier(
         // input
         // -----
         processInput(window);
-
-        // Animate circus tent door & spotlights
-        circusTent.updateDoor(deltaTime);
-        circusTent.updateSpotlights(deltaTime);
 
         // render
         // ------
@@ -998,57 +973,6 @@ unsigned int canopyVAO = hollowBezier(
         if (!specularOn)
             spotLight.turnSpecularOff();
 
-        // ---- Circus spotlight uniforms (6 interior + 6 exterior) ----
-        ourShader.setBool("circusLightsOn", true);
-        for (int i = 0; i < CircusTent::NUM_SPOTS; ++i) {
-            // Interior spotlights [0..5]
-            glm::vec3 pos, dir;
-            circusTent.getSpotParams(tentModel, i, pos, dir);
-            char buf[64];
-            snprintf(buf, sizeof buf, "circusSpotLights[%d]", i);
-            string base(buf);
-            glm::vec3 col = circusTent.spotColors[i];
-            ourShader.setVec3(base + ".position", pos);
-            ourShader.setVec3(base + ".direction", dir);
-            ourShader.setFloat(base + ".cutOff", glm::cos(glm::radians(18.0f)));
-            ourShader.setFloat(base + ".outerCutOff", glm::cos(glm::radians(25.0f)));
-            ourShader.setVec4(base + ".ambient",  glm::vec4(col * 0.15f, 1.0f));
-            ourShader.setVec4(base + ".diffuse",  glm::vec4(col * 0.8f, 1.0f));
-            ourShader.setVec4(base + ".specular", glm::vec4(col * 0.5f, 1.0f));
-            ourShader.setFloat(base + ".Kc", 1.0f);
-            ourShader.setFloat(base + ".Kl", 0.22f);
-            ourShader.setFloat(base + ".Kq", 0.20f);
-
-            // Exterior spotlights [6..11] — on anchor posts
-            float ang = 6.28318530f * i / 6 + 0.52f;
-            float ca = cosf(ang), sa = sinf(ang);
-            float ANCHOR_R = CircusTent::R * 1.85f;
-            float POST_H   = 0.7f;
-            glm::vec3 postTop(ANCHOR_R * ca, POST_H, ANCHOR_R * sa);
-            float phase = 6.28318530f * i / 6;
-            float tilt  = 0.3f + 0.35f * sinf(circusTent.spotSweep * 1.2f + phase);
-            glm::vec3 groundTarget(-ANCHOR_R * 0.3f * ca, -0.3f, -ANCHOR_R * 0.3f * sa);
-            glm::vec3 toGround = glm::normalize(groundTarget - postTop);
-            glm::vec3 apex(0, CircusTent::WALL_H * 0.5f, 0);
-            glm::vec3 toApex = glm::normalize(apex - postTop);
-            glm::vec3 aimDir = glm::normalize(glm::mix(toGround, toApex, tilt));
-            glm::vec3 wPos = glm::vec3(tentModel * glm::vec4(postTop, 1.0f));
-            glm::vec3 wDir = glm::normalize(glm::vec3(tentModel * glm::vec4(aimDir, 0.0f)));
-
-            snprintf(buf, sizeof buf, "circusSpotLights[%d]", i + 6);
-            string eb(buf);
-            ourShader.setVec3(eb + ".position", wPos);
-            ourShader.setVec3(eb + ".direction", wDir);
-            ourShader.setFloat(eb + ".cutOff", glm::cos(glm::radians(22.0f)));
-            ourShader.setFloat(eb + ".outerCutOff", glm::cos(glm::radians(35.0f)));
-            ourShader.setVec4(eb + ".ambient",  glm::vec4(col * 0.10f, 1.0f));
-            ourShader.setVec4(eb + ".diffuse",  glm::vec4(col * 0.6f, 1.0f));
-            ourShader.setVec4(eb + ".specular", glm::vec4(col * 0.4f, 1.0f));
-            ourShader.setFloat(eb + ".Kc", 1.0f);
-            ourShader.setFloat(eb + ".Kl", 0.14f);
-            ourShader.setFloat(eb + ".Kq", 0.07f);
-        }
-
         //Setting up Camera and Others
         ourShader.setVec3("viewPos", camera.Position);
         ourShader.setBool("lightingOn", lightingOn);
@@ -1122,229 +1046,228 @@ unsigned int canopyVAO = hollowBezier(
             Floor(ourShader, translateMatrix, color1);
         }
 
-        // ================================================================
-        //  LAYOUT: 2x2 center grid + shop wings + peripherals
-        //
-        //  Tent footprint: R=4, ANCHOR_R=R*1.85=7.4  → cell ≥ 15x15
-        //
-        //  Center rectangle (roads boundary):
-        //    X: -14 to +10       Z: -13 to +8
-        //  Vertical divider ≈ X=-1    Horiz divider ≈ Z=+1
-        //
-        //  Cell (1,1) Top-Left    : Banyan Tree   center(-5,  +5)
-        //  Cell (1,2) Top-Right   : Carousel       center(+5, +4)
-        //  Cell (2,1) Bottom-Left : Circus Tent   center(-5, -4) ← biggest
-        //  Cell (2,2) Bottom-Right: Ferris Wheel  center(+5, -4)
-        // ================================================================
-
-        // ================================================================
-        //  U-SHAPED ROADS around center rectangle
-        // ================================================================
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(9.2f, -2.145f, 2.0f));
+        color1 = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
         glBindTexture(GL_TEXTURE_2D, texture4);
-        {
-            glm::vec4 roadColor(0.45f, 0.45f, 0.45f, 1.0f);
-            ourShader.setVec4("material.ambient", roadColor);
-            ourShader.setVec4("material.diffuse", roadColor);
-            ourShader.setVec4("material.specular", glm::vec4(0.1f));
-            ourShader.setFloat("material.shininess", 8.0f);
+        Road(ourShader, translateMatrix, color1);
 
-            // LEFT road (along Z): X from -14 to -12, Z from -13 to +8
-            translateMatrix = glm::translate(identityMatrix, glm::vec3(-14.0f, -0.41f, -13.0f));
-            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 42.0f));
-            ourShader.setMat4("model", translateMatrix * scaleMatrix);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        // Boundary, Garden, and Gate removed
 
-            // RIGHT road (along Z): X from +10 to +12, Z from -13 to +8
-            translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, -0.41f, -13.0f));
-            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 42.0f));
-            ourShader.setMat4("model", translateMatrix * scaleMatrix);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glm::mat4 rotCW  = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
+        glm::mat4 rotCCW = glm::rotate(identityMatrix, glm::radians(-90.0f), glm::vec3(0,1,0));
+        glm::mat4 rot180 = glm::rotate(identityMatrix, glm::radians(0.0f), glm::vec3(0,1,0));
 
-            // BOTTOM road (along X): Z from -13 to -11, X from -14 to +12
-            translateMatrix = glm::translate(identityMatrix, glm::vec3(-14.0f, -0.41f, -13.0f));
-            scaleMatrix = glm::scale(identityMatrix, glm::vec3(52.0f, 0.05f, 4.0f));
-            ourShader.setMat4("model", translateMatrix * scaleMatrix);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        }
+        // ---- LEFT SIDE SHOPS (facing road/center) ----
+        // Shop 1 - Left front
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, 2.0f));
+        Shop(ourShader, translateMatrix * rotCW, glm::vec4(1,1,1,1), textureOn ? texture0 : bambooTex);
 
-        // ================================================================
-        //  SHOPS — 3 modular rows using shops1/2/3.h
-        // ================================================================
-        // Left Wing (shops1.h): vertical row along -X, outside left road
-        // shops1 places 3 shops at Z offsets 0, -5.5, -11 with rotCW (face +X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-17.0f, 0.0f, 5.0f));
-        drawShopRow1(ourShader, translateMatrix, textureOn);
+        // Shop 2 - Left middle (variant - fruit stall)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, -3.5f));
+        ShopVariant(ourShader, translateMatrix * rotCW,
+            glm::vec4(0.85f, 0.55f, 0.10f, 1.0f),  // orange roof
+            textureOn ? texture0 : bambooTex);
 
-        // Right Wing (shops2.h): vertical row along +X, outside right road
-        // shops2 places 3 shops at Z offsets 0, -5.5, -11 with rotCCW (face -X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(15.0f, 0.0f, 5.0f));
-        drawShopRow2(ourShader, translateMatrix, textureOn);
+        // Shop 3 - Left back
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, -9.0f));
+        Shop(ourShader, translateMatrix * rotCW, glm::vec4(0.9f, 0.85f, 0.75f, 1.0f),
+            textureOn ? texture0 : bambooTex);
 
-        // Bottom Wing (shops3.h): horizontal row along -Z, outside bottom road
-        // shops3 places 3 shops at X offsets 0, 6, 12 with rot180 (face +Z)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-7.0f, 0.0f, -16.0f));
-        drawShopRow3(ourShader, translateMatrix, textureOn);
+        // ---- RIGHT SIDE SHOPS (facing road/center) ----
+        // Shop 4 - Right front
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, 2.0f));
+        Shop(ourShader, translateMatrix * rotCCW, glm::vec4(1,1,1,1), textureOn ? texture0 : bambooTex);
 
-        // ================================================================
-        //  UMBRELLAS — between shops in each row
-        // ================================================================
-        glBindTexture(GL_TEXTURE_2D, texture0);
-        // Left side (between shops at Z=5, -0.5, -6)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-17.5f, -0.42f, 2.25f));
-        drawUmbrella(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-17.5f, -0.42f, -3.0f));
-        drawUmbrella(ourShader, translateMatrix);
-        // Right side (between shops at Z=5, -0.5, -6)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(15.5f, -0.42f, 2.25f));
-        drawUmbrella(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(15.5f, -0.42f, -3.0f));
-        drawUmbrella(ourShader, translateMatrix);
-        // Bottom (between shops at X=-7, -1, 5)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-4.0f, -0.42f, -16.5f));
-        drawUmbrella(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, -0.42f, -16.5f));
-        drawUmbrella(ourShader, translateMatrix);
+        // Shop 5 - Right middle (variant)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, -3.5f));
+        ShopVariant(ourShader, translateMatrix * rotCCW,
+            glm::vec4(0.60f, 0.80f, 0.40f, 1.0f),  // green roof
+            textureOn ? texture0 : bambooTex);
 
-        // ================================================================
-        //  CIRCUS TENT — Cell (2,1) Bottom-Left, center (-5, -4)
-        //  Tent R=4, ANCHOR_R=7.4 → fits in cell X[-14,-1] Z[-13,+1]
-        // ================================================================
+        // Shop 6 - Right back
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, -9.0f));
+        Shop(ourShader, translateMatrix * rotCCW, glm::vec4(0.95f, 0.90f, 0.80f, 1.0f),
+            textureOn ? texture0 : bambooTex);
+
+        // Shop 7 - joined to left row, at the back (same facing as left shops)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, -14.5f));
+        ShopVariant(ourShader, translateMatrix * rotCW,
+            glm::vec4(0.70f, 0.30f, 0.20f, 1.0f),  // red roof
+            textureOn ? texture0 : bambooTex);
+
+        // Shop 8 - joined to right row, at the back (same facing as right shops)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(17.0f, 0.0f, -14.5f));
+        Shop(ourShader, translateMatrix * rotCCW, glm::vec4(1,1,1,1),
+            textureOn ? texture0 : bambooTex);
+
+        // ---- CIRCUS TENT ----
         circusTent.draw(ourShader, tentModel, whiteflower, lightingOn);
         glBindVertexArray(cubeVAO);
 
-        // ================================================================
-        //  BANYAN TREE — Cell (1,1) Top-Left, center (-5, +5)
-        // ================================================================
+        // ---- BANYAN TREE (beside the fair, left side) ----
         {
-            const glm::vec3 banyanPos   = glm::vec3(-5.0f, -0.42f, 5.0f);
+            // Tree centered between the two back shops (Shop 7 at X=-1, Shop 8 at X=17)
+            const glm::vec3 banyanPos = glm::vec3(8.0f, -0.42f, -14.5f);
             const float     banyanScale = 1.5f;
             glm::mat4 banyanModel =
                 glm::translate(identityMatrix, banyanPos) *
                 glm::scale(identityMatrix, glm::vec3(banyanScale));
             ourShader.setBool("lightingOn", lightingOn);
+            // Brick platform ring at tree base
             banyanTree.drawPlatform(ourShader, banyanPos, banyanScale, brickTex2);
+            // Tree itself
             banyanTree.draw(ourShader, banyanModel, barkTex, leafTex);
+            // Restore cubeVAO for all subsequent draws in this frame
             glBindVertexArray(cubeVAO);
         }
 
-        // ================================================================
-        //  RIDES
-        // ================================================================
-        // Carousel — Cell (1,2) Top-Right, world center (+5, +4)
-        // Internal pivot: (14, 1.2, -4.25) → offset: (5-14, 0, 4-(-4.25))
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-9.0f, 0.0f, 8.25f));
-        Carousal(ourShader, translateMatrix, rotateAngleTest_Y);
-
-        // Ferris Wheel — Cell (2,2) Bottom-Right, world center (+5, -4)
-        // Internal center: (3, 2, 11.5) → offset: (5-3, 0, -4-11.5)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, 0.0f, -15.5f));
-        FerrisWheel(ourShader, translateMatrix);
-
-        // ================================================================
-        //  POND + PIRATE SHIP — top edge (+Z), centered between shops
-        // ================================================================
-        {
-            float currentTime = (float)glfwGetTime();
-            glm::mat4 pondMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -0.3f, 12.0f));
-            drawPondShipScene(ourShader, pondMatrix, currentTime);
-            glBindVertexArray(cubeVAO);
-        }
-
-        // ================================================================
-        //  BENCHES & CHAIRS — top corners flanking pond
-        // ================================================================
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-10.0f, -0.6f, 10.0f));
-        seat(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.6f, 10.0f));
-        seat(ourShader, translateMatrix);
-
-        // ================================================================
-        //  LAMP POSTS — along inner edges of roads
-        // ================================================================
-        glBindTexture(GL_TEXTURE_2D, texture0);
-        // Left road inner edge (X≈-12)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, 5.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, -1.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-12.0f, 0.0f, -7.0f));
-        LampPost(ourShader, translateMatrix);
-        // Right road inner edge (X≈+10)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, 5.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, -1.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, 0.0f, -7.0f));
-        LampPost(ourShader, translateMatrix);
-        // Bottom road inner edge (Z≈-11)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-6.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.0f, 0.0f, -11.0f));
-        LampPost(ourShader, translateMatrix);
-
-        // ================================================================
-        //  FLAG BUNTING — outermost perimeter boundary
-        // ================================================================
-        glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
-        // Bottom edge (along X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, -19.0f));
-        FlagBunting(ourShader, translateMatrix, 38.0f);
-        // Top edge (along X)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix, 38.0f);
-        // Left edge (along Z, rotated)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-20.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix * rotY90, 34.0f);
-        // Right edge (along Z, rotated)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(18.0f, -0.42f, 15.0f));
-        FlagBunting(ourShader, translateMatrix * rotY90, 34.0f);
-
-        // ================================================================
-        //  MISC PROPS
-        // ================================================================
-        // Balloon vendor near entry (bottom-left corner)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-10.0f, -0.42f, -14.0f));
+        // Balloon vendor near entrance
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(6.5f, -0.42f, 13.0f));
         BalloonBunch(ourShader, translateMatrix);
 
-        // Vendor cart in center area
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, -0.42f, 1.0f));
+        glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0,1,0));
+
+        // Across entrance (spans X from gate pillar to gate pillar ~7.0 to 10.0 = 3 units)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, 15.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        // Left side - runs along Z axis so needs rotY90
+        // Starts at front (Z=13) runs toward back (Z=-13) = 26 units
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.8f, -0.42f, 13.0f));
+        FlagBunting(ourShader, translateMatrix * rotY90, 26.0f);
+
+        // Right side - same but on right
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(18.0f, -0.42f, 13.0f));
+        FlagBunting(ourShader, translateMatrix * rotY90, 26.0f);
+
+        // Cross bunting over road center (optional - festive arch effect)
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, 5.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.0f, -0.42f, -5.0f));
+        FlagBunting(ourShader, translateMatrix, 3.0f);
+
+        // Vendor cart in center path
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(7.5f, -0.42f, 5.0f));
         VendorCart(ourShader, translateMatrix);
 
-        // Well near vertical road gap
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, -0.42f, -5.0f));
+        // Well near back of fair
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.42f, -8.0f));
         Well(ourShader, translateMatrix);
+        //seat
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.6f, 0.0f));
+        seat(ourShader, translateMatrix);
 
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(11.0f, -0.6f, 0.0f));
+        seat(ourShader, translateMatrix);
+
+
+        
         // Food place
         glBindTexture(GL_TEXTURE_2D, texture0);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(3.0f, 0.0f, -1.0f));
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
         FoodPlace(ourShader, translateMatrix, rotateAngleTest_Y);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.13f, 0.0f, -6.93f));
+        LampPost(ourShader, translateMatrix);
 
-        // Kite jar
-        glm::mat4 jarMatrix = glm::translate(identityMatrix, glm::vec3(-3.0f, -0.2f, 1.0f));
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(5.0f, 1.2f, 8.0f));
+        scaleMatrix = glm::scale(identityMatrix, glm::vec3(0.6f, 0.6f, 0.6f));
+        drawCube1(ourShader, translateMatrix * scaleMatrix, 60.0f, glm::vec4(0.2f));
+
+        
+        // Draw the jar
+        glm::mat4 jarMatrix = glm::translate(identityMatrix, glm::vec3(3.0f, -0.2f, 3.0f));
         drawJar(ourShader, jarMatrix, glm::vec4(0.8f, 0.5f, 0.3f, 1.0f), 0.5f, 0.5f, 36);
-        for (int i = 0; i < 8; ++i) {
-            float angle = glm::radians(i * 360.0f / 8);
-            glm::vec3 rp(0.25f * cos(angle), 0.1f + 0.2f * (i % 3), 0.25f * sin(angle));
-            glm::mat4 kiteMatrix = jarMatrix * glm::translate(glm::mat4(1.0f), rp);
-            drawKiteWithStick(ourShader, kiteMatrix,
-                glm::vec4(1.0f - 0.1f * i, 0.1f * i, 0.5f, 1.0f),
-                glm::vec4(0.3f, 0.2f, 0.1f, 1.0f), 0.5f, glm::vec3(0.0f));
+
+        // Arrange kites in the jar
+        // Number of kites
+        int numKites = 8;
+
+        // Loop to position kites inside the jar
+        for (int i = 0; i < numKites; ++i) {
+            // Spread kites in a circular pattern
+            float angle = glm::radians(i * 360.0f / numKites);
+            float x = 0.25f * cos(angle); // Circular placement on X-axis
+            float z = 0.25f * sin(angle); // Circular placement on Z-axis
+            float y = 0.1f + 0.2f * (i % 3); // Vary heights slightly within the jar
+
+            // Kite position relative to the jar
+            glm::vec3 relativePosition = glm::vec3(x, y, z);
+
+            // Combine jarMatrix and relative position for the kite
+            glm::mat4 kiteMatrix = jarMatrix * glm::translate(glm::mat4(1.0f), relativePosition);
+
+            // Draw the kite with stick
+            drawKiteWithStick(
+                ourShader, kiteMatrix,
+                glm::vec4(1.0f - 0.1f * i, 0.1f * i, 0.5f, 1.0f), // Kite color
+                glm::vec4(0.3f, 0.2f, 0.1f, 1.0f),                // Stick color
+                0.5f, glm::vec3(0.0f));                           // Position now handled by `kiteMatrix`
         }
+        // Draw the river in the render loop
+        
+        //glBindTexture(GL_TEXTURE_2D, waterTextureID); // Replace `waterTextureID` with your texture ID
 
-        // Decorative balls
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(3.0f, -0.15f, 3.0f));
-        ball1.drawSphereWithTexture(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.5f, -0.15f, 3.0f));
-        ball1.drawSphereWithTexture(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.7f, -0.15f, 2.5f));
+        glm::mat4 riverMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(14.0f, -0.2f, 7.0f)); // Adjust Y-position to place river under objects
+        drawBezierRiver(
+            ourShader,
+            riverMatrix,
+            riverVAO,
+            riverIndices,
+            glm::vec4(0.0f, 0.3f, 1.0f, 1.0f) // Blue river color
+        );
+
+
+        //*****************************Rides***********************************************************************
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+        FerrisWheel(ourShader, translateMatrix);
+        PirateShip(ourShader, translateMatrix);
+        Carousal(ourShader, translateMatrix, rotateAngleTest_Y);
+
+
+        //Lamp Posts
+        glBindTexture(GL_TEXTURE_2D, texture0);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, 0.0f, -0.7f));
+        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, 0.0f, -19.7f));
+        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, 0.0f, -13.7f));
+        LampPost(ourShader, translateMatrix);
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(-2.0f, 0.0f, -7.2f));
+        LampPost(ourShader, translateMatrix);
+
+
+       
+        //balls
+        //model = identityMatrix;
+        //model = glm::translate(model, glm::vec3(-3.0f, -0.2f, -5.0f));
+        //glm::mat4 ballmodel = glm::translate(glm::mat4(1.0f), glm::vec3(11.0f, -0.15f, 3.0f));
+        
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(11.0f, -0.15f, 3.3f));
         ball1.drawSphereWithTexture(ourShader, translateMatrix);
 
-        // Decorative trees near pond
-        glm::mat4 treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 9.0f));
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.4f, -0.15f, 3.3f));
+        ball1.drawSphereWithTexture(ourShader, translateMatrix);
+
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(10.5f, -0.15f, 2.7f));
+        ball1.drawSphereWithTexture(ourShader, translateMatrix);
+        
+        /*if (!textureOn)
+        {
+            sphereWithTexture.drawSphereWithTexture(lightCubeShaderwithtexture, translateMatrix);
+        }
+        else
+        {
+            model *= glm::scale(identityMatrix, glm::vec3(0.25f, 0.25f, 0.25f));
+            ball.drawSphere(ourShader);
+        }
+        */
+        // Draw a tree at a specific location
+        glm::mat4 treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -5.0f));
         drawRealisticTree(ourShader, treeModel, trunkVAO, canopyVAO, trunkIndices, canopyIndices);
-        treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(9.0f, 0.0f, 9.0f));
+
+        // Draw a tree at a specific location
+        treeModel = glm::translate(glm::mat4(1.0f), glm::vec3(12.0f, 0.0f, -11.5f));
         drawRealisticTree(ourShader, treeModel, trunkVAO, canopyVAO, trunkIndices, canopyIndices);
 
         //********* END of Object Making **********
@@ -1448,9 +1371,4 @@ unsigned int canopyVAO = hollowBezier(
 #include "src/draw_static.h"
 #include "src/bezier_utils.h"
 #include "src/draw_animated.h"
-#include "src/draw_pond_ship.h"
-#include "src/shops1.h"
-#include "src/shops2.h"
-#include "src/shops3.h"
-#include "src/draw_umbrella.h"
 

@@ -46,10 +46,13 @@ struct SpotLight {                    //Spot Light
 };
 
 const int noOfPointLights = 4;
+const int noOfCircusSpots = 12;  // 6 interior + 6 exterior
 
 uniform PointLight pointLights[noOfPointLights];
 uniform DirectionalLight directionalLight;
 uniform SpotLight spotLight;
+uniform SpotLight circusSpotLights[noOfCircusSpots];
+uniform bool circusLightsOn;
 
 
 uniform Material material;
@@ -59,6 +62,7 @@ uniform vec3 lightPos;
 uniform vec3 viewPos;
 
 uniform bool lightingOn;
+uniform bool alphaTest;
 //uniform bool dark;
 
 uniform sampler2D ourTexture;
@@ -92,7 +96,12 @@ void main()
 
     //Aggregate all result
 
-    vec4 result = dirL + pointL + spotL;
+    vec4 circusL = vec4(0.0);
+    if(circusLightsOn)
+        for(int i = 0; i < noOfCircusSpots; i++)
+            circusL += CalcSpotLight(material, circusSpotLights[i], Normal, FragPos);
+
+    vec4 result = dirL + pointL + spotL + circusL;
 
     if(!lightingOn)
     {
@@ -103,7 +112,10 @@ void main()
     //    result = vec4(0.0f);
     //}
 
-    FragColor = texture(ourTexture, TexCoord) * result ;
+    vec4 texColor = texture(ourTexture, TexCoord);
+    if (alphaTest && texColor.a < 0.15)
+        discard;
+    FragColor = texColor * result;
 }
 
 vec4 CalcDirLight(Material material, DirectionalLight light, vec3 normal, vec3 fragPos)

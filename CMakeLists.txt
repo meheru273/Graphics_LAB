@@ -177,3 +177,54 @@ endif()
 
 message(STATUS "Added project: codes")
 endif()
+
+# -------------------------------------------------------------------------
+# curves project
+# Self-contained: shader.h, camera.h, pointLight.h live in the project dir.
+# Two shader pairs copied from root of the project folder.
+# The points save file (fopen) will be written next to the exe in build dir.
+# -------------------------------------------------------------------------
+if(EXISTS ${CMAKE_SOURCE_DIR}/projects/curves/main.cpp)
+
+add_executable(curves
+    projects/curves/main.cpp
+    ${OPENGL_DIR}/glad.c
+)
+
+target_include_directories(curves PRIVATE
+    ${CMAKE_SOURCE_DIR}/projects/curves
+)
+
+target_link_libraries(curves PRIVATE
+    OpenGL::GL
+    glfw
+    glm::glm
+)
+
+set_target_properties(curves PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/projects/curves
+)
+
+# Copy both shader pairs (plain .vs/.fs at project root)
+file(GLOB CURVES_SHADERS
+    ${CMAKE_SOURCE_DIR}/projects/curves/*.vs
+    ${CMAKE_SOURCE_DIR}/projects/curves/*.fs
+)
+foreach(SHADER ${CURVES_SHADERS})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    configure_file(${SHADER}
+                  ${CMAKE_BINARY_DIR}/projects/curves/${SHADER_NAME}
+                  COPYONLY)
+endforeach()
+
+# Copy the points text file so the exe can write its output next to itself
+set(CURVES_POINTS_SRC "${CMAKE_SOURCE_DIR}/projects/curves/points you can copy.txt")
+if(EXISTS "${CURVES_POINTS_SRC}")
+    configure_file(
+        "${CURVES_POINTS_SRC}"
+        "${CMAKE_BINARY_DIR}/projects/curves/points you can copy.txt"
+        COPYONLY)
+endif()
+
+message(STATUS "Added project: curves")
+endif()

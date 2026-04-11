@@ -8,66 +8,56 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {                 //Forward
+    // ── Movement (always allowed) ──
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {                 //Backward
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {                 //Left
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.ProcessKeyboard(LEFT, deltaTime);
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {                 //Right
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)                   //Camera Up
-    {
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, deltaTime);
-    }
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)                   //Camera Down
-    {
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+
+    // ── Controls that only work OUTSIDE the tent ──
+    if (!g_insideTent) {
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+            camera.ProcessYPR(0.0f, 3.0f, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+            camera.ProcessYPR(0.0f, -3.0f, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+            camera.ProcessYPR(3.0f, 0.0f, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+            camera.ProcessYPR(-3.0f, 0.0f, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+            camera.ProcessYPR(0.0f, 0.0f, 0.5f);
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+            camera.RotateAroundLookAt(2.0f);
+        if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+            camera.RotateAroundLookAt(-2.0f);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)                   //Pitch up
-    {
-        camera.ProcessYPR(0.0f, 3.0f, 0.0f);
+    // ── Clamp camera inside tent when in interior mode ──
+    if (g_insideTent) {
+        // Clamp XZ to tent cylinder (strict — no escaping)
+        glm::vec2 offset(camera.Position.x - g_tentCenter.x,
+                         camera.Position.z - g_tentCenter.z);
+        float dist = glm::length(offset);
+        if (dist > g_tentRadius) {
+            offset = glm::normalize(offset) * (g_tentRadius - 0.05f);
+            camera.Position.x = g_tentCenter.x + offset.x;
+            camera.Position.z = g_tentCenter.z + offset.y;
+        }
+        // Clamp Y between floor and ceiling
+        if (camera.Position.y < g_tentFloorY)
+            camera.Position.y = g_tentFloorY;
+        if (camera.Position.y > g_tentCeilY)
+            camera.Position.y = g_tentCeilY;
+        camera.LOOKAT = camera.Position + camera.Front;
     }
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)                   //Pitch down
-    {
-        camera.ProcessYPR(0.0f, -3.0f, 0.0f);
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)                   //Yaw right
-    {
-        camera.ProcessYPR(3.0f, 0.0f, 0.0f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)                   //Yaw left
-    {
-        camera.ProcessYPR(-3.0f, 0.0f, 0.0f);
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)                   //Roll right
-    {
-        camera.ProcessYPR(0.0f, 0.0f, 0.5f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)                   //Roll left
-    {
-        camera.ProcessYPR(0.0f, 0.0f, -0.5f);
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)                   //Orbit left around scene
-    {
-        camera.RotateAroundLookAt(2.0f);
-    }
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)                   //Orbit right around scene
-    {
-        camera.RotateAroundLookAt(-2.0f);
-    }
-
-
-
 }
 
 
@@ -76,6 +66,42 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_G && action == GLFW_PRESS)                   //Gate Open/Close
     {
         isGateOpening *= -1.0f;
+    }
+
+    if (key == GLFW_KEY_N && action == GLFW_PRESS)                   //Circus tent door open/close
+    {
+        circusTent.toggleDoor();
+    }
+
+    // Q advances the sun one step. 10 presses = full cycle
+    // (8 day steps: sunrise->noon->sunset, then 2 night steps).
+    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    {
+        g_sunStep = (g_sunStep + 1) % 10;
+    }
+
+    // T — toggle circus tent interior / exterior view
+    if (key == GLFW_KEY_T && action == GLFW_PRESS)
+    {
+        g_insideTent = !g_insideTent;
+        if (g_insideTent) {
+            // Save current camera state
+            g_savedCamPos = camera.Position;
+            g_savedYaw    = camera.Yaw;
+            g_savedPitch  = camera.Pitch;
+            // Tent centre=(-5,-0.42,-4), entrance gap on +Z side (local +Z = world +Z)
+            // Spawn just inside the entrance, look toward -Z (into tent interior)
+            camera.Position = glm::vec3(-5.0f, -0.42f + 1.6f, -4.0f + 2.5f);
+            camera.Yaw   = -90.0f;  // -90° → front=(0,0,-1) → looking into tent
+            camera.Pitch =  -8.0f;
+            camera.updateCameraVectors();
+        } else {
+            // Restore saved camera
+            camera.Position = g_savedCamPos;
+            camera.Yaw      = g_savedYaw;
+            camera.Pitch    = g_savedPitch;
+            camera.updateCameraVectors();
+        }
     }
 
 
@@ -312,6 +338,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
+// Left mouse click → toggle all circus spotlights moving
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        circusTent.toggleSpotlights();
+}
+
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
@@ -329,6 +362,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
     lastX = xpos;
     lastY = ypos;
+
+    // Only rotate the camera while the right mouse button is held down.
+    // This frees the cursor for window interaction (resize, focus, etc.).
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) != GLFW_PRESS) {
+        return;
+    }
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
