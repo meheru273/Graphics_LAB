@@ -37,8 +37,8 @@ void drawCube1(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest = 0
 void Road(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Boundary(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
 void Gate(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color);
-void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int texture);
-void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, unsigned int texture);
+void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int texture, unsigned int itemTex1 = 0, unsigned int itemTex2 = 0);
+void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, unsigned int texture, unsigned int itemTex1 = 0, unsigned int itemTex2 = 0);
 void BalloonBunch(Shader ourShader, glm::mat4 moveMatrix);
 void FlagBunting(Shader ourShader, glm::mat4 moveMatrix, float length);
 void VendorCart(Shader ourShader, glm::mat4 moveMatrix);
@@ -56,6 +56,8 @@ void BezierCurve(double t, float xy[2], GLfloat ctrlpoints[], int L);
 unsigned int hollowBezier(GLfloat ctrlpoints[], int L, vector<float>& coordinates, vector<float>& normals, vector<int>& indices, vector<float>& vertices);
 void drawCurve(Shader ourShader, glm::mat4 moveMatrix, unsigned int VAO, vector<int> indices, glm::vec4 color = glm::vec4(1.0f), float rotateAngleTest_Y = 0);
 void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix);
+void drawPlayerThirdPerson(Shader& s, glm::mat4 rootMatrix, unsigned int plainTex, float walkPhase);
+void drawPlayerFirstPerson(Shader& s, glm::mat4 viewmodelMatrix, unsigned int plainTex, float walkPhase);
 void FerrisWheelSeat(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0, glm::mat4 parentMove = glm::mat4(1.0f));
 void PirateShip(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z = 0);
 void drawKite(Shader& shader, glm::mat4 moveMatrix, glm::vec4 kiteColor, glm::vec4 barColor, float scale, glm::vec3 position);
@@ -111,7 +113,7 @@ float lastTime = 0.0f, lastTimeSky = 0.0f;
 
 
 // Light initialization
-const int noOfPointLights = 4;
+const int noOfPointLights = 13;  // 4 tent corners + 9 lamp posts
 
 glm::vec3 lightPositions[] = {
         glm::vec3(-0.95f, 1.4f, -2.7f),         //Directional Light
@@ -134,6 +136,24 @@ PointLight pointLight1(lightPositions[1], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm
 PointLight pointLight2(lightPositions[2], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f, 2);
 PointLight pointLight3(lightPositions[3], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f, 3);
 PointLight pointLight4(lightPositions[4], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f, 4);
+
+// Lamp post point lights (5-13) — bulb at local offset (0.23, 1.66, 0.0) from base
+// Warm white, moderate range for road lighting
+glm::vec4 lpAmb(0.15f, 0.14f, 0.10f, 1.0f);
+glm::vec4 lpDiff(1.0f, 0.95f, 0.70f, 1.0f);
+glm::vec4 lpSpec(0.6f, 0.6f, 0.5f, 1.0f);
+// Left road (X=-12): bases at z=5, -1, -7 → bulb offset (+0.23, +1.66, 0)
+PointLight pointLight5( glm::vec3(-11.77f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 5);
+PointLight pointLight6( glm::vec3(-11.77f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 6);
+PointLight pointLight7( glm::vec3(-11.77f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 7);
+// Right road (X=10): bases at z=5, -1, -7
+PointLight pointLight8( glm::vec3(10.23f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 8);
+PointLight pointLight9( glm::vec3(10.23f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 9);
+PointLight pointLight10(glm::vec3(10.23f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 10);
+// Bottom road (Z=-11): bases at x=-6, 0, 6
+PointLight pointLight11(glm::vec3(-5.77f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 11);
+PointLight pointLight12(glm::vec3( 0.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 12);
+PointLight pointLight13(glm::vec3( 6.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 13);
 
 
 //***********************************Curve*******************
@@ -291,6 +311,22 @@ glm::vec3 g_savedCamPos = glm::vec3(0.0f);
 float g_savedYaw   = 0.0f;
 float g_savedPitch = 0.0f;
 
+// ---- Cursor & FOV globals ----
+bool  g_cursorLocked = true;   // starts locked for FPS-style look
+float g_fov          = 75.0f;  // field of view (scroll to zoom)
+
+// ---- Player character globals ----
+enum CameraMode { CAM_FIRST_PERSON, CAM_CHASE };
+CameraMode g_camMode        = CAM_CHASE;
+glm::vec3  g_playerPos      = glm::vec3(-18.0f, -0.42f, -16.0f);  // feet on ground, near gate
+float      g_playerYaw      = 42.0f;   // degrees, matches initial camera yaw
+float      g_playerPitch    = 0.0f;    // vertical look angle
+float      g_walkTimer      = 0.0f;    // accumulated walk phase for bobbing
+bool       g_playerMoving   = false;   // true when WASD held this frame
+// Chase camera smoothing
+glm::vec3  g_chaseCamPos    = glm::vec3(-18.0f, 2.0f, -16.0f);
+float      g_chaseSmoothSpeed = 5.0f;
+
 // Pond module forward declarations
 void initPondShip();
 void drawPondShipScene(Shader& shader, glm::mat4 moveMatrix, float time);
@@ -340,6 +376,9 @@ std::vector<float> generateCanopyControlPoints() {
 // Textures
 unsigned int texture0, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9,texture10,garden2,garden1,whiteflower,shoptex,bambooTex;
 unsigned int barkTex, leafTex, brickTex2, signTex;
+// Shop item textures (billboard sprites)
+unsigned int itemChipsTex, itemPopcornTex, itemSlushyTex, itemTeddyTex, itemTeddyMultiTex;
+unsigned int itemCottonPinkTex, itemCottonBlueTex;
 
 bool textureOn = false;
 // Skybox
@@ -432,7 +471,7 @@ int main()
 
     // Keep cursor free so the user can resize/move the window.
     // Press Tab to toggle between free cursor and captured (FPS-look) mode.
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -800,6 +839,21 @@ int main()
     load_texture(brickTex2, "textures/brickwall_2.jpg", GL_RGB);
     load_texture(signTex,   "textures/village_fare.png", GL_RGBA);
 
+    // Shop item billboard textures (RGBA with alpha, CLAMP_TO_EDGE)
+    auto loadItemTex = [](unsigned int& tex, const char* path) {
+        load_texture(tex, path, GL_RGBA);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    };
+    loadItemTex(itemChipsTex,       "textures/items/chips.png");
+    loadItemTex(itemPopcornTex,     "textures/items/popcorn.png");
+    loadItemTex(itemSlushyTex,      "textures/items/slushy.png");
+    loadItemTex(itemTeddyTex,       "textures/items/teddybearwhite.png");
+    loadItemTex(itemTeddyMultiTex,  "textures/items/teddybear_multiple.png");
+    loadItemTex(itemCottonPinkTex,  "textures/items/cotton_candy_pink.png");
+    loadItemTex(itemCottonBlueTex,  "textures/items/cottoncandy_blue.png");
+
 
     //unsigned int footballMap = loadTexture(footballPath.c_str(), GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
 
@@ -920,21 +974,49 @@ unsigned int canopyVAO = hollowBezier(
         ourShader.setBool("alphaTest", false); // default off; BanyanTree enables it only for leaves
         glBindVertexArray(cubeVAO);
 
-        // pass projection matrix to shader (note that in this case it could change every frame)
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        //glm::mat4 projection = glm::ortho(-2.0f, +2.0f, -1.5f, +1.5f, 0.1f, 100.0f);
+        // ── Projection: wider FOV for immersive feel, adjustable via scroll ──
+        glm::mat4 projection = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         ourShader.setMat4("projection", projection);
 
-        ////testing rotating around lookat point
-        //const float radius = 2.0f;
-        //float camX = sin(glfwGetTime()) * radius;
-        //float camZ = cos(glfwGetTime()) * radius;
-        //glm::mat4 view;
-        //view = glm::lookAt(glm::vec3(camX, 1.0, camZ), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+        // ── Player-driven camera ──
+        float yawR   = glm::radians(g_playerYaw);
+        float pitchR = glm::radians(g_playerPitch);
+        glm::vec3 playerFront;
+        playerFront.x = cos(yawR) * cos(pitchR);
+        playerFront.y = sin(pitchR);
+        playerFront.z = sin(yawR) * cos(pitchR);
+        playerFront = glm::normalize(playerFront);
 
-        // camera/view transformation
-        //glm::mat4 view = basic_camera.createViewMatrix();
-        glm::mat4 view = camera.GetViewMatrix();
+        // Eye height
+        const float EYE_HEIGHT = 1.6f;
+        glm::vec3 eyePos = g_playerPos + glm::vec3(0.0f, EYE_HEIGHT, 0.0f);
+
+        glm::mat4 view;
+        if (g_camMode == CAM_FIRST_PERSON) {
+            // FPV: camera at eye level, slight forward offset to avoid head clipping
+            glm::vec3 fpvPos = eyePos + playerFront * 0.15f;
+            // Walking bob
+            float bob = 0.0f;
+            if (g_playerMoving)
+                bob = sinf(g_walkTimer) * 0.04f;
+            fpvPos.y += bob;
+            view = glm::lookAt(fpvPos, fpvPos + playerFront, glm::vec3(0,1,0));
+            // Update camera object so skybox and other systems pick up the position
+            camera.Position = fpvPos;
+        } else {
+            // Chase camera: behind and above the player with lerp smoothing
+            float chaseDist   = 3.5f;
+            float chaseHeight = 1.8f;
+            glm::vec3 flatFront(cos(yawR), 0.0f, sin(yawR));
+            glm::vec3 desiredPos = eyePos - flatFront * chaseDist + glm::vec3(0.0f, chaseHeight, 0.0f);
+            // Smooth follow (lerp)
+            float t = 1.0f - expf(-g_chaseSmoothSpeed * deltaTime);
+            g_chaseCamPos = glm::mix(g_chaseCamPos, desiredPos, t);
+            view = glm::lookAt(g_chaseCamPos, eyePos + glm::vec3(0, 0.3f, 0), glm::vec3(0,1,0));
+            camera.Position = g_chaseCamPos;
+        }
+        camera.Front = playerFront;
+        camera.LOOKAT = camera.Position + camera.Front;
         ourShader.setMat4("view", view);
 
         
@@ -989,11 +1071,21 @@ unsigned int canopyVAO = hollowBezier(
         if(!specularOn)
             directionalLight.turnSpecularOff();
 
-        //Setting up Point Light
+        //Setting up Point Light (tent corners 1-4)
         SetupPointLight(pointLight1, ourShader, 1);
         SetupPointLight(pointLight2, ourShader, 2);
         SetupPointLight(pointLight3, ourShader, 3);
         SetupPointLight(pointLight4, ourShader, 4);
+        //Setting up Point Light (lamp posts 5-13)
+        SetupPointLight(pointLight5,  ourShader, 5);
+        SetupPointLight(pointLight6,  ourShader, 6);
+        SetupPointLight(pointLight7,  ourShader, 7);
+        SetupPointLight(pointLight8,  ourShader, 8);
+        SetupPointLight(pointLight9,  ourShader, 9);
+        SetupPointLight(pointLight10, ourShader, 10);
+        SetupPointLight(pointLight11, ourShader, 11);
+        SetupPointLight(pointLight12, ourShader, 12);
+        SetupPointLight(pointLight13, ourShader, 13);
 
         //Setting up Spot Light
         spotLight.setUpLight(ourShader);
@@ -1020,12 +1112,12 @@ unsigned int canopyVAO = hollowBezier(
             ourShader.setVec3(base + ".direction", dir);
             ourShader.setFloat(base + ".cutOff", glm::cos(glm::radians(18.0f)));
             ourShader.setFloat(base + ".outerCutOff", glm::cos(glm::radians(25.0f)));
-            ourShader.setVec4(base + ".ambient",  glm::vec4(col * 0.15f, 1.0f));
-            ourShader.setVec4(base + ".diffuse",  glm::vec4(col * 0.8f, 1.0f));
-            ourShader.setVec4(base + ".specular", glm::vec4(col * 0.5f, 1.0f));
+            ourShader.setVec4(base + ".ambient",  glm::vec4(col * 0.35f, 1.0f));
+            ourShader.setVec4(base + ".diffuse",  glm::vec4(col * 1.8f, 1.0f));
+            ourShader.setVec4(base + ".specular", glm::vec4(col * 1.2f, 1.0f));
             ourShader.setFloat(base + ".Kc", 1.0f);
-            ourShader.setFloat(base + ".Kl", 0.22f);
-            ourShader.setFloat(base + ".Kq", 0.20f);
+            ourShader.setFloat(base + ".Kl", 0.09f);
+            ourShader.setFloat(base + ".Kq", 0.05f);
 
             // Exterior spotlights [6..11] — on anchor posts
             float ang = 6.28318530f * i / 6 + 0.52f;
@@ -1312,6 +1404,25 @@ unsigned int canopyVAO = hollowBezier(
         }
 
         // ================================================================
+        //  PLAYER CHARACTER
+        // ================================================================
+        {
+            ourShader.use();
+            float walkPhase = g_playerMoving ? sinf(g_walkTimer) : 0.0f;
+            if (g_camMode == CAM_CHASE) {
+                // Third-person: draw full body at player position, rotated to face yaw
+                glm::mat4 playerRoot = glm::translate(glm::mat4(1.0f), g_playerPos)
+                    * glm::rotate(glm::mat4(1.0f), glm::radians(g_playerYaw - 90.0f), glm::vec3(0,1,0));
+                drawPlayerThirdPerson(ourShader, playerRoot, texture0, walkPhase);
+            } else {
+                // First-person: draw arms as viewmodel (in camera-relative space)
+                glm::mat4 invView = glm::inverse(view);
+                drawPlayerFirstPerson(ourShader, invView, texture0, walkPhase);
+            }
+            glBindVertexArray(cubeVAO);
+        }
+
+        // ================================================================
         //  MISC PROPS
         // ================================================================
         // Balloon vendor near entry (bottom-left corner)
@@ -1427,7 +1538,7 @@ unsigned int canopyVAO = hollowBezier(
         glm::mat4 view1 = glm::mat4(1.0f);
         glm::mat4 projection1 = glm::mat4(1.0f);
         view1 = glm::mat4(glm::mat3(camera.GetViewMatrix()));
-        projection1 = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        projection1 = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         skyboxShader.setMat4("view", view1);
         skyboxShader.setMat4("projection", projection1);
 
@@ -1473,6 +1584,7 @@ unsigned int canopyVAO = hollowBezier(
 // Segmented source files (#included for readability):
 // ================================================================
 #include "src/callbacks.h"
+#include "src/draw_shop_items.h"
 #include "src/draw_static.h"
 #include "src/bezier_utils.h"
 #include "src/draw_animated.h"
@@ -1482,4 +1594,5 @@ unsigned int canopyVAO = hollowBezier(
 #include "src/shops3.h"
 #include "src/draw_umbrella.h"
 #include "src/draw_boundary.h"
+#include "src/draw_player.h"
 

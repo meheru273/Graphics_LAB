@@ -210,7 +210,8 @@ void Boundary(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
 }
 
 
-void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int texture = texture0)
+void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int texture,
+          unsigned int itemTex1, unsigned int itemTex2)
 {
     glm::mat4 identityMatrix = glm::mat4(1.0f);
     // Apply local scaling (1.5x) but leave translations for the caller
@@ -278,19 +279,32 @@ void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int 
         drawBox(glm::vec3(-1.45f, shelfY[i], -0.90f), glm::vec3(2.9f, 0.03f, 0.12f), shelfColor, texture0);
     }
 
-    // Product Boxes on Shelves
-    glm::vec4 productColors[3] = {
-        glm::vec4(0.8f, 0.2f, 0.2f, 1.0f),  // red
-        glm::vec4(0.2f, 0.6f, 0.2f, 1.0f),  // green
-        glm::vec4(0.9f, 0.8f, 0.1f, 1.0f)   // yellow
-    };
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            drawBox(
-                glm::vec3(-0.9f + j * 0.65f, shelfY[i] + 0.05f, -0.91f),
-                glm::vec3(0.12f, 0.10f, 0.08f),
-                productColors[j % 3], texture0
-            );
+    // Billboard items on shelves (if item textures provided)
+    if (itemTex1 != 0) {
+        unsigned int shelfTexArr[2] = { itemTex1, itemTex2 ? itemTex2 : itemTex1 };
+        for (int i = 0; i < 3; i++) {
+            glm::vec3 shelfPositions[3];
+            for (int j = 0; j < 3; j++) {
+                shelfPositions[j] = glm::vec3(-0.9f + j * 0.65f, shelfY[i] + 0.04f, -0.88f);
+            }
+            drawShopItems(ourShader, moveMatrix, shelfPositions, 3, shelfTexArr, 2, 0.40f);
+        }
+        glBindVertexArray(cubeVAO);
+    } else {
+        // Fallback: original coloured blocks
+        glm::vec4 productColors[3] = {
+            glm::vec4(0.8f, 0.2f, 0.2f, 1.0f),
+            glm::vec4(0.2f, 0.6f, 0.2f, 1.0f),
+            glm::vec4(0.9f, 0.8f, 0.1f, 1.0f)
+        };
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                drawBox(
+                    glm::vec3(-0.9f + j * 0.65f, shelfY[i] + 0.05f, -0.91f),
+                    glm::vec3(0.12f, 0.10f, 0.08f),
+                    productColors[j % 3], texture0
+                );
+            }
         }
     }
 
@@ -304,21 +318,31 @@ void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int 
     glm::vec4 glassColor = glm::vec4(0.7f, 0.85f, 0.95f, 0.6f);
     drawBox(glm::vec3(-1.0f, 0.66f, 0.93f), glm::vec3(2.0f, 0.25f, 0.03f), glassColor, whiteflower);
 
-    // Sack/bag on counter (left side)
-    glm::vec4 sackColor = glm::vec4(0.65f, 0.50f, 0.30f, 1.0f);
-    drawBox(glm::vec3(-1.2f, 0.68f, 0.10f), glm::vec3(0.18f, 0.20f, 0.15f), sackColor, texture);
-    drawBox(glm::vec3(-0.85f, 0.68f, 0.05f), glm::vec3(0.14f, 0.22f, 0.14f), sackColor * 0.85f, texture);
-
-    // Small clay pots on counter (center)
-    glm::vec4 potColor = glm::vec4(0.65f, 0.30f, 0.15f, 1.0f);
-    drawBox(glm::vec3(-0.15f, 0.68f, 0.10f), glm::vec3(0.10f, 0.14f, 0.10f), potColor, texture0);
-    drawBox(glm::vec3( 0.10f, 0.68f, 0.20f), glm::vec3(0.08f, 0.12f, 0.08f), potColor * 1.1f, texture0);
-    drawBox(glm::vec3( 0.30f, 0.68f, 0.05f), glm::vec3(0.09f, 0.15f, 0.09f), potColor * 0.9f, texture0);
-
-    // Stacked boxes on right side of counter
-    glm::vec4 crateColor = glm::vec4(0.50f, 0.38f, 0.20f, 1.0f);
-    drawBox(glm::vec3( 0.80f, 0.68f, 0.10f), glm::vec3(0.20f, 0.12f, 0.18f), crateColor, texture0);
-    drawBox(glm::vec3( 0.82f, 0.80f, 0.12f), glm::vec3(0.17f, 0.12f, 0.15f), crateColor * 0.85f, texture0);
+    // Counter-top billboard items
+    if (itemTex1 != 0) {
+        unsigned int counterTexArr[2] = { itemTex1, itemTex2 ? itemTex2 : itemTex1 };
+        glm::vec3 counterPositions[5] = {
+            glm::vec3(-1.1f,  0.72f, 0.15f),
+            glm::vec3(-0.55f, 0.72f, 0.10f),
+            glm::vec3( 0.00f, 0.72f, 0.18f),
+            glm::vec3( 0.50f, 0.72f, 0.08f),
+            glm::vec3( 0.95f, 0.72f, 0.14f),
+        };
+        drawShopItems(ourShader, moveMatrix, counterPositions, 5, counterTexArr, 2, 0.55f);
+        glBindVertexArray(cubeVAO);
+    } else {
+        // Fallback: original blocks
+        glm::vec4 sackColor = glm::vec4(0.65f, 0.50f, 0.30f, 1.0f);
+        drawBox(glm::vec3(-1.2f, 0.68f, 0.10f), glm::vec3(0.18f, 0.20f, 0.15f), sackColor, texture);
+        drawBox(glm::vec3(-0.85f, 0.68f, 0.05f), glm::vec3(0.14f, 0.22f, 0.14f), sackColor * 0.85f, texture);
+        glm::vec4 potColor = glm::vec4(0.65f, 0.30f, 0.15f, 1.0f);
+        drawBox(glm::vec3(-0.15f, 0.68f, 0.10f), glm::vec3(0.10f, 0.14f, 0.10f), potColor, texture0);
+        drawBox(glm::vec3( 0.10f, 0.68f, 0.20f), glm::vec3(0.08f, 0.12f, 0.08f), potColor * 1.1f, texture0);
+        drawBox(glm::vec3( 0.30f, 0.68f, 0.05f), glm::vec3(0.09f, 0.15f, 0.09f), potColor * 0.9f, texture0);
+        glm::vec4 crateColor = glm::vec4(0.50f, 0.38f, 0.20f, 1.0f);
+        drawBox(glm::vec3( 0.80f, 0.68f, 0.10f), glm::vec3(0.20f, 0.12f, 0.18f), crateColor, texture0);
+        drawBox(glm::vec3( 0.82f, 0.80f, 0.12f), glm::vec3(0.17f, 0.12f, 0.15f), crateColor * 0.85f, texture0);
+    }
 
     // Hanging produce/items from roof beam (inside shop)
     glm::vec4 produceColor = glm::vec4(0.85f, 0.60f, 0.10f, 1.0f);
@@ -359,7 +383,8 @@ void Shop(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color, unsigned int 
     glBindVertexArray(0);
 }
 
-void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, unsigned int texture = texture0)
+void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, unsigned int texture,
+                 unsigned int itemTex1, unsigned int itemTex2)
 {
     glm::mat4 identityMatrix = glm::mat4(1.0f);
     glm::mat4 baseShopOffset = glm::scale(identityMatrix, glm::vec3(1.5f, 1.5f, 1.5f));
@@ -385,11 +410,11 @@ void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, uns
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     };
 
-    // Posts
-    drawBox(glm::vec3(-1.5f, 0.0f, -1.0f), glm::vec3(0.12f, 1.5f, 0.12f), woodColor, texture0);
-    drawBox(glm::vec3( 1.5f, 0.0f, -1.0f), glm::vec3(0.12f, 1.5f, 0.12f), woodColor, texture0);
-    drawBox(glm::vec3(-1.5f, 0.0f,  1.0f), glm::vec3(0.12f, 1.5f, 0.12f), woodColor, texture0);
-    drawBox(glm::vec3( 1.5f, 0.0f,  1.0f), glm::vec3(0.12f, 1.5f, 0.12f), woodColor, texture0);
+    // Posts — back posts reach back beam (Y=1.88), front posts reach front beam (Y=1.48)
+    drawBox(glm::vec3(-1.5f, 0.0f, -1.0f), glm::vec3(0.12f, 1.88f, 0.12f), woodColor, texture0);
+    drawBox(glm::vec3( 1.5f, 0.0f, -1.0f), glm::vec3(0.12f, 1.88f, 0.12f), woodColor, texture0);
+    drawBox(glm::vec3(-1.5f, 0.0f,  1.0f), glm::vec3(0.12f, 1.48f, 0.12f), woodColor, texture0);
+    drawBox(glm::vec3( 1.5f, 0.0f,  1.0f), glm::vec3(0.12f, 1.48f, 0.12f), woodColor, texture0);
 
     // Back wall - full height, open top variation (no upper panel)
     drawBox(glm::vec3(-1.45f, 0.0f, -0.95f), glm::vec3(2.9f, 0.75f, 0.05f), panelColor, texture0);
@@ -407,22 +432,37 @@ void ShopVariant(Shader ourShader, glm::mat4 moveMatrix, glm::vec4 roofTint, uns
     drawBox(glm::vec3(-1.40f, 0.0f,  1.00f), glm::vec3(0.08f, 0.60f, 0.08f), woodColor, texture0);
     drawBox(glm::vec3( 1.35f, 0.0f,  1.00f), glm::vec3(0.08f, 0.60f, 0.08f), woodColor, texture0);
 
-    // Produce on table - colorful items
-    glm::vec4 colors[6] = {
-        glm::vec4(0.9f, 0.2f, 0.1f, 1.0f),  // red (tomato)
-        glm::vec4(0.9f, 0.7f, 0.0f, 1.0f),  // yellow (mango)
-        glm::vec4(0.2f, 0.65f, 0.2f, 1.0f), // green (veg)
-        glm::vec4(0.8f, 0.4f, 0.0f, 1.0f),  // orange
-        glm::vec4(0.6f, 0.15f, 0.5f, 1.0f), // purple (brinjal)
-        glm::vec4(0.95f, 0.90f, 0.2f, 1.0f) // bright yellow
-    };
-    for (int col = 0; col < 6; col++) {
-        for (int row = 0; row < 2; row++) {
-            drawBox(
-                glm::vec3(-1.1f + col * 0.40f, 0.63f + row * 0.10f, -0.20f + row * 0.25f),
-                glm::vec3(0.13f, 0.09f, 0.13f),
-                colors[col], texture0
-            );
+    // Table-top billboard items
+    if (itemTex1 != 0) {
+        unsigned int tableTexArr[2] = { itemTex1, itemTex2 ? itemTex2 : itemTex1 };
+        glm::vec3 tablePositions[6] = {
+            glm::vec3(-1.05f, 0.66f, -0.10f),
+            glm::vec3(-0.55f, 0.66f,  0.05f),
+            glm::vec3(-0.05f, 0.66f, -0.05f),
+            glm::vec3( 0.45f, 0.66f,  0.10f),
+            glm::vec3( 0.85f, 0.66f, -0.08f),
+            glm::vec3( 1.20f, 0.66f,  0.05f),
+        };
+        drawShopItems(ourShader, moveMatrix, tablePositions, 6, tableTexArr, 2, 0.55f);
+        glBindVertexArray(cubeVAO);
+    } else {
+        // Fallback: original coloured blocks
+        glm::vec4 colors[6] = {
+            glm::vec4(0.9f, 0.2f, 0.1f, 1.0f),
+            glm::vec4(0.9f, 0.7f, 0.0f, 1.0f),
+            glm::vec4(0.2f, 0.65f, 0.2f, 1.0f),
+            glm::vec4(0.8f, 0.4f, 0.0f, 1.0f),
+            glm::vec4(0.6f, 0.15f, 0.5f, 1.0f),
+            glm::vec4(0.95f, 0.90f, 0.2f, 1.0f)
+        };
+        for (int col = 0; col < 6; col++) {
+            for (int row = 0; row < 2; row++) {
+                drawBox(
+                    glm::vec3(-1.1f + col * 0.40f, 0.63f + row * 0.10f, -0.20f + row * 0.25f),
+                    glm::vec3(0.13f, 0.09f, 0.13f),
+                    colors[col], texture0
+                );
+            }
         }
     }
 

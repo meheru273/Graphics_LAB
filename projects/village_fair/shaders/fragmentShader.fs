@@ -45,7 +45,7 @@ struct SpotLight {                    //Spot Light
     float Kq;
 };
 
-const int noOfPointLights = 4;
+const int noOfPointLights = 13;  // 4 tent corners + 9 lamp posts
 const int noOfCircusSpots = 12;  // 6 interior + 6 exterior
 
 uniform PointLight pointLights[noOfPointLights];

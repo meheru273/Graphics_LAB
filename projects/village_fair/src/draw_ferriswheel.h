@@ -12,13 +12,20 @@ void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix)
     glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     glm::mat4 translateMatrix, scaleMatrix, model, rotateZMatrix, rotateTemp;
 
-    // Make the wheel larger (1.8x) and rotate 90° around Y (face east-west)
+    // Make the wheel larger (2x) and rotate 90° around Y (face east-west)
+    // Then lift it so the pillar bases sit on ground level instead of sinking
+    float scaleFactor = 2.0f;
     glm::vec3 wheelCenter(3.0f, 2.0f, 11.5f);
     glm::mat4 toOrigin = glm::translate(identityMatrix, -wheelCenter);
     glm::mat4 fromOrigin = glm::translate(identityMatrix, wheelCenter);
     glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 scaleBig = glm::scale(identityMatrix, glm::vec3(1.8f));
-    moveMatrix = moveMatrix * fromOrigin * scaleBig * rotY90 * toOrigin;
+    glm::mat4 scaleBig = glm::scale(identityMatrix, glm::vec3(scaleFactor));
+    // Pillar base is at local Y=-0.41. After scale around center Y=2.0 it drops to:
+    //   2.0 + scaleFactor*(-0.41-2.0) = 2.0 - scaleFactor*2.41
+    // We need it back at Y=-0.41, so raise by (scaleFactor-1)*2.41
+    float yLift = (scaleFactor - 1.0f) * (wheelCenter.y - (-0.41f));
+    glm::mat4 liftUp = glm::translate(identityMatrix, glm::vec3(0.0f, yLift, 0.0f));
+    moveMatrix = moveMatrix * liftUp * fromOrigin * scaleBig * rotY90 * toOrigin;
 
     if (isFerrisWheelOn)
     {
@@ -42,7 +49,7 @@ void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix)
     scaleMatrix = glm::scale(identityMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
     model = translateMatrix * rotateZMatrix * scaleMatrix * rotateTemp;
 
-    glm::vec4 color = glm::vec4(100.0 / 256, 100.0 / 256, 200.0 / 256, 1.0f);
+    glm::vec4 color = glm::vec4(0.95f, 0.10f, 0.10f, 1.0f);  // bright red
     //glm::vec4 color = glm::vec4(1.0f);
     ourShader.setMat4("model", moveMatrix * model);
     ourShader.setVec4("material.ambient", color);
@@ -170,6 +177,45 @@ void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix)
     glBindVertexArray(cubeVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
+    // ── Marquee lights around the wheel rim ───────────────────
+    {
+        float hubX = 3.0f, hubY = 2.0f;
+        float rimRadius = 1.55f;  // matches bezier wheel radius (~1.6)
+        float frontZ = 12.05f, backZ = 10.95f;
+        float currentTime = (float)glfwGetTime();
+        int lightPhase = (int)(currentTime * 3.0f);
+        int numLights = 24;  // lights evenly spaced around the rim
+
+        glBindVertexArray(sphereVAO);
+        ourShader.setBool("lightingOn", false);
+
+        for (int ring = 0; ring < 2; ++ring) {
+            float zPos = (ring == 0) ? frontZ : backZ;
+            for (int i = 0; i < numLights; ++i) {
+                float angle = glm::radians(ferrisWheelAngle + (float)i * 360.0f / numLights);
+                float lx = hubX + rimRadius * cosf(angle);
+                float ly = hubY + rimRadius * sinf(angle);
+
+                bool isOn = ((i + lightPhase) % 3 != 0);
+                glm::vec4 bulbOn(1.0f, 1.0f, 0.0f, 1.0f);    // bright yellow
+                glm::vec4 bulbOff(0.4f, 0.4f, 0.0f, 1.0f);    // dim yellow
+                glm::vec4 bulb = isOn ? bulbOn : bulbOff;
+
+                ourShader.setVec4("material.ambient",  bulb);
+                ourShader.setVec4("material.diffuse",  bulb);
+                ourShader.setVec4("material.specular", glm::vec4(0.0f));
+                ourShader.setFloat("material.shininess", 1.0f);
+
+                glm::mat4 M = glm::translate(identityMatrix, glm::vec3(lx, ly, zPos))
+                             * glm::scale(identityMatrix, glm::vec3(0.09f));
+                ourShader.setMat4("model", moveMatrix * M);
+                glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+            }
+        }
+        ourShader.setBool("lightingOn", lightingOn);
+        glBindVertexArray(0);
+    }
 
     color = glm::vec4(1.0f);
     ourShader.setVec4("material.ambient", color);

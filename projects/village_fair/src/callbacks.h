@@ -8,79 +8,61 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    // ── Movement (always allowed) ──
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
+    // ── Player movement on XZ plane relative to look direction ──
+    float playerSpeed = 4.5f * deltaTime;
+    float yawRad = glm::radians(g_playerYaw);
+    glm::vec3 forward(cos(yawRad), 0.0f, sin(yawRad));
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0,1,0)));
 
-    // ── Controls that only work OUTSIDE the tent ──
-    if (!g_insideTent) {
-        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
-            camera.ProcessYPR(0.0f, 3.0f, 0.0f);
-        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-            camera.ProcessYPR(0.0f, -3.0f, 0.0f);
-        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-            camera.ProcessYPR(3.0f, 0.0f, 0.0f);
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
-            camera.ProcessYPR(-3.0f, 0.0f, 0.0f);
-        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-            camera.ProcessYPR(0.0f, 0.0f, 0.5f);
-        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-            camera.RotateAroundLookAt(2.0f);
-        if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
-            camera.RotateAroundLookAt(-2.0f);
+    g_playerMoving = false;
+    glm::vec3 moveDir(0.0f);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { moveDir += forward; g_playerMoving = true; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { moveDir -= forward; g_playerMoving = true; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { moveDir -= right;   g_playerMoving = true; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { moveDir += right;   g_playerMoving = true; }
+
+    if (g_playerMoving) {
+        moveDir = glm::normalize(moveDir) * playerSpeed;
+        g_playerPos += moveDir;
+        g_walkTimer += deltaTime * 8.0f;
     }
 
-    // ── Clamp camera inside tent when in interior mode ──
+    // ── Clamp player inside tent when in interior mode ──
     if (g_insideTent) {
-    // Clamp XZ to tent cylinder (strict — no escaping)
-        glm::vec2 offset(camera.Position.x - g_tentCenter.x,
-                         camera.Position.z - g_tentCenter.z);
+        glm::vec2 offset(g_playerPos.x - g_tentCenter.x,
+                         g_playerPos.z - g_tentCenter.z);
         float dist = glm::length(offset);
         if (dist > g_tentRadius) {
             offset = glm::normalize(offset) * (g_tentRadius - 0.05f);
-            camera.Position.x = g_tentCenter.x + offset.x;
-            camera.Position.z = g_tentCenter.z + offset.y;
+            g_playerPos.x = g_tentCenter.x + offset.x;
+            g_playerPos.z = g_tentCenter.z + offset.y;
         }
-        // Clamp Y between floor and ceiling
-        if (camera.Position.y < g_tentFloorY)
-            camera.Position.y = g_tentFloorY;
-        if (camera.Position.y > g_tentCeilY)
-            camera.Position.y = g_tentCeilY;
-        camera.LOOKAT = camera.Position + camera.Front;
     }
 
-    // ── Clamp camera to extended boundary (10 units beyond fence) ──────
+    // ── Clamp player to extended boundary ──
     if (!g_insideTent) {
         const float X_MIN = -30.0f, X_MAX = 28.0f;
         const float Z_MIN = -29.0f, Z_MAX = 25.0f;
-
-        if (camera.Position.x < X_MIN) camera.Position.x = X_MIN;
-        if (camera.Position.x > X_MAX) camera.Position.x = X_MAX;
-        if (camera.Position.z < Z_MIN) camera.Position.z = Z_MIN;
-        if (camera.Position.z > Z_MAX) camera.Position.z = Z_MAX;
-
-        const float MIN_Y =  -0.3f;
-        const float MAX_Y =  20.0f;
-        if (camera.Position.y < MIN_Y) camera.Position.y = MIN_Y;
-        if (camera.Position.y > MAX_Y) camera.Position.y = MAX_Y;
-
-        camera.LOOKAT = camera.Position + camera.Front;
+        if (g_playerPos.x < X_MIN) g_playerPos.x = X_MIN;
+        if (g_playerPos.x > X_MAX) g_playerPos.x = X_MAX;
+        if (g_playerPos.z < Z_MIN) g_playerPos.z = Z_MIN;
+        if (g_playerPos.z > Z_MAX) g_playerPos.z = Z_MAX;
     }
 }
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    // Left Alt — toggle cursor lock (so user can resize window / interact with UI)
+    if (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS)
+    {
+        g_cursorLocked = !g_cursorLocked;
+        glfwSetInputMode(window, GLFW_CURSOR,
+                         g_cursorLocked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        if (g_cursorLocked) firstMouse = true;  // avoid camera jump on re-lock
+    }
+
     if (key == GLFW_KEY_G && action == GLFW_PRESS)                   //Gate Open/Close
     {
         isGateOpening *= -1.0f;
@@ -103,22 +85,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     {
         g_insideTent = !g_insideTent;
         if (g_insideTent) {
-            // Save current camera state
-            g_savedCamPos = camera.Position;
-            g_savedYaw    = camera.Yaw;
-            g_savedPitch  = camera.Pitch;
-            // Tent centre=(-5,-0.42,-3), entrance gap on +Z side
-            // Spawn just inside the entrance, look toward -Z (into tent interior)
-            camera.Position = glm::vec3(-5.0f, -0.42f + 1.6f, -3.0f + 2.5f);
-            camera.Yaw   = -90.0f;  // -90° → front=(0,0,-1) → looking into tent
-            camera.Pitch =  -8.0f;
-            camera.updateCameraVectors();
+            // Save current player state
+            g_savedCamPos = g_playerPos;
+            g_savedYaw    = g_playerYaw;
+            g_savedPitch  = g_playerPitch;
+            // Teleport player inside tent entrance
+            g_playerPos   = glm::vec3(-5.0f, -0.42f, -3.0f + 2.5f);
+            g_playerYaw   = -90.0f;
+            g_playerPitch = -8.0f;
         } else {
-            // Restore saved camera
-            camera.Position = g_savedCamPos;
-            camera.Yaw      = g_savedYaw;
-            camera.Pitch    = g_savedPitch;
-            camera.updateCameraVectors();
+            // Restore saved player state
+            g_playerPos   = g_savedCamPos;
+            g_playerYaw   = g_savedYaw;
+            g_playerPitch = g_savedPitch;
         }
     }
 
@@ -315,9 +294,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             spotLight.turnOff();
         }
     }
-    if (key == GLFW_KEY_V && action == GLFW_PRESS)                   //Ferris Wheel On/Off
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)                   //Ferris Wheel On/Off
     {
         isFerrisWheelOn ^= true;
+    }
+    if (key == GLFW_KEY_V && action == GLFW_PRESS)                   //Toggle FPV / Chase camera
+    {
+        g_camMode = (g_camMode == CAM_FIRST_PERSON) ? CAM_CHASE : CAM_FIRST_PERSON;
     }
     if (key == GLFW_KEY_B && action == GLFW_PRESS)                   //Boat On/Off
     {
@@ -381,20 +364,27 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    // Only rotate the camera while the right mouse button is held down.
-    // This frees the cursor for window interaction (resize, focus, etc.).
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) != GLFW_PRESS) {
-        return;
-    }
+    // Skip mouse look when cursor is unlocked (user is interacting with window)
+    if (!g_cursorLocked) return;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    // Mouse controls look — update player yaw & pitch
+    float sensitivity = 0.1f;
+    g_playerYaw   += xoffset * sensitivity;
+    g_playerPitch += yoffset * sensitivity;
+
+    // Constrain pitch so screen doesn't flip
+    if (g_playerPitch >  89.0f) g_playerPitch =  89.0f;
+    if (g_playerPitch < -89.0f) g_playerPitch = -89.0f;
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    // Zoom in/out by adjusting FOV
+    g_fov -= (float)yoffset * 2.0f;
+    if (g_fov < 30.0f) g_fov = 30.0f;
+    if (g_fov > 110.0f) g_fov = 110.0f;
 }
 
 
