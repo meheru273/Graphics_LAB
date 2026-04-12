@@ -12,6 +12,14 @@ void FerrisWheel(Shader ourShader, glm::mat4 moveMatrix)
     glm::mat4 identityMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     glm::mat4 translateMatrix, scaleMatrix, model, rotateZMatrix, rotateTemp;
 
+    // Make the wheel larger (1.8x) and rotate 90° around Y (face east-west)
+    glm::vec3 wheelCenter(3.0f, 2.0f, 11.5f);
+    glm::mat4 toOrigin = glm::translate(identityMatrix, -wheelCenter);
+    glm::mat4 fromOrigin = glm::translate(identityMatrix, wheelCenter);
+    glm::mat4 rotY90 = glm::rotate(identityMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 scaleBig = glm::scale(identityMatrix, glm::vec3(1.8f));
+    moveMatrix = moveMatrix * fromOrigin * scaleBig * rotY90 * toOrigin;
+
     if (isFerrisWheelOn)
     {
         ferrisWheelSpeed += ferrisIncrement;

@@ -64,7 +64,8 @@ static void _drawPost(Shader& shader, glm::mat4 moveMatrix,
 // ──────────────────────────────────────────────────────────────
 static void _drawRopeAndFlags(Shader& shader, glm::mat4 moveMatrix,
                               float x0, float z0, float x1, float z1,
-                              unsigned int plainTex)
+                              unsigned int plainTex,
+                              float ropeY = ROPE_Y_TOP)
 {
     glm::mat4 I = glm::mat4(1.0f);
     glBindVertexArray(cubeVAO);
@@ -94,7 +95,7 @@ static void _drawRopeAndFlags(Shader& shader, glm::mat4 moveMatrix,
 
         float sx = x0 + dx * tMid;
         float sz = z0 + dz * tMid;
-        float sy = BND_Y + ROPE_Y_TOP - sagMid;
+        float sy = BND_Y + ropeY - sagMid;
 
         float pieceLen = segLen / ROPE_SEGS;
 
@@ -149,7 +150,7 @@ static void _drawRopeAndFlags(Shader& shader, glm::mat4 moveMatrix,
         float fx = x0 + dx * t;
         float fz = z0 + dz * t;
         float sag = ROPE_SAG * 4.0f * t * (1.0f - t);
-        float fy = BND_Y + ROPE_Y_TOP - sag;
+        float fy = BND_Y + ropeY - sag;
 
         glm::vec4 col = flagColors[i % 7];
         glm::mat4 M = glm::translate(I, glm::vec3(fx, fy, fz))
@@ -172,9 +173,11 @@ static void _drawRopeAndFlags(Shader& shader, glm::mat4 moveMatrix,
 static void _drawFenceEdge(Shader& shader, glm::mat4 moveMatrix,
                            float x0, float z0, float x1, float z1,
                            unsigned int woodTex, unsigned int plainTex,
+                           float time = 0.0f,
                            float skipMin = 1e9f, float skipMax = -1e9f,
                            bool skipIsX = true)
 {
+    glm::mat4 I = glm::mat4(1.0f);
     float dx = x1 - x0, dz = z1 - z0;
     float edgeLen = sqrtf(dx*dx + dz*dz);
     float dirX = dx / edgeLen, dirZ = dz / edgeLen;
@@ -196,12 +199,44 @@ static void _drawFenceEdge(Shader& shader, glm::mat4 moveMatrix,
         _drawPost(shader, moveMatrix, px, pz, woodTex);
     }
 
-    // Draw rope + flags between consecutive posts
-    for (int i = 0; i + 1 < (int)postTs.size(); ++i) {
-        float t0 = postTs[i], t1 = postTs[i+1];
-        float px0 = x0 + dx*t0, pz0 = z0 + dz*t0;
-        float px1 = x0 + dx*t1, pz1 = z0 + dz*t1;
-        _drawRopeAndFlags(shader, moveMatrix, px0, pz0, px1, pz1, plainTex);
+    // Draw marquee lights on top of each post
+    glBindVertexArray(sphereVAO);
+    glBindTexture(GL_TEXTURE_2D, plainTex);
+    shader.setBool("lightingOn", false);
+
+    int phase = (int)(time * 3.0f);
+    for (int i = 0; i < (int)postTs.size(); ++i) {
+        float px = x0 + dx * postTs[i];
+        float pz = z0 + dz * postTs[i];
+        float ly = BND_Y + POST_HEIGHT + 0.15f;
+
+        bool isOn = ((i + phase) % 2 == 0);
+        glm::vec4 bulbOn(1.0f, 0.90f, 0.45f, 1.0f);
+        glm::vec4 bulbOff(0.25f, 0.22f, 0.15f, 1.0f);
+        glm::vec4 bulb = isOn ? bulbOn : bulbOff;
+
+        shader.setVec4("material.ambient",  bulb);
+        shader.setVec4("material.diffuse",  bulb);
+        shader.setVec4("material.specular", glm::vec4(0.0f));
+        shader.setFloat("material.shininess", 1.0f);
+
+        glm::mat4 M = glm::translate(I, glm::vec3(px, ly, pz))
+                     * glm::scale(I, glm::vec3(0.08f));
+        shader.setMat4("model", moveMatrix * M);
+        glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+    }
+    shader.setBool("lightingOn", lightingOn);
+    glBindVertexArray(cubeVAO);
+
+    // Draw rope + flags between consecutive posts at three heights
+    float ropeHeights[3] = { ROPE_Y_TOP, ROPE_Y_TOP * 0.62f, ROPE_Y_TOP * 0.30f };
+    for (int h = 0; h < 3; ++h) {
+        for (int i = 0; i + 1 < (int)postTs.size(); ++i) {
+            float t0 = postTs[i], t1 = postTs[i+1];
+            float px0 = x0 + dx*t0, pz0 = z0 + dz*t0;
+            float px1 = x0 + dx*t1, pz1 = z0 + dz*t1;
+            _drawRopeAndFlags(shader, moveMatrix, px0, pz0, px1, pz1, plainTex, ropeHeights[h]);
+        }
     }
 }
 
@@ -417,7 +452,7 @@ void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix,
     // Bottom edge (Z = BND_ZMIN, X from XMIN to XMAX) — has gate gap near left corner
     _drawFenceEdge(shader, moveMatrix,
                    BND_XMIN, BND_ZMIN, BND_XMAX, BND_ZMIN,
-                   woodTex, plainTex,
+                   woodTex, plainTex, time,
                    GATE_CENTER_X - GATE_HALF_W - 0.3f,
                    GATE_CENTER_X + GATE_HALF_W + 0.3f,
                    true);
@@ -425,12 +460,12 @@ void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix,
     // Top edge (Z = BND_ZMAX, X from XMIN to XMAX)
     _drawFenceEdge(shader, moveMatrix,
                    BND_XMIN, BND_ZMAX, BND_XMAX, BND_ZMAX,
-                   woodTex, plainTex);
+                   woodTex, plainTex, time);
 
     // Left edge (X = BND_XMIN, Z from ZMAX down to ZMIN) — skip near bottom corner
     _drawFenceEdge(shader, moveMatrix,
                    BND_XMIN, BND_ZMAX, BND_XMIN, BND_ZMIN,
-                   woodTex, plainTex,
+                   woodTex, plainTex, time,
                    BND_ZMIN - 0.5f,
                    BND_ZMIN + 2.0f,
                    false);
@@ -438,7 +473,7 @@ void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix,
     // Right edge (X = BND_XMAX, Z from ZMAX down to ZMIN)
     _drawFenceEdge(shader, moveMatrix,
                    BND_XMAX, BND_ZMAX, BND_XMAX, BND_ZMIN,
-                   woodTex, plainTex);
+                   woodTex, plainTex, time);
 
     // Entrance gate with arch, sign, and marquee lights
     _drawEntranceGate(shader, moveMatrix, woodTex, signTex, time);
