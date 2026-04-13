@@ -7,26 +7,24 @@
 12	1035	7931031766036116	CMakeFiles/aeroplane.dir/opengl/glad.c.obj	8dc88b167a2fff8c
 82	1350	7931039394520857	CMakeFiles/aeroplane.dir/projects/aeroplane/main.cpp.obj	43ed9e75c81204c3
 1350	1534	7931039407216085	projects/aeroplane/aeroplane.exe	be1031abada46835
-4	656	7977630856905727	build.ninja	dace66de0ea1a6d0
-4	656	7977630856795757	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
+31	972	7977703281858473	build.ninja	dace66de0ea1a6d0
+31	972	7977703281720809	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
 12	5313	7953021819028343	CMakeFiles/village_fair.dir/projects/village_fair/image_loader.cpp.obj	753218414ccfcaf9
 19	6032	7953021819142919	CMakeFiles/village_fair.dir/opengl/glad.c.obj	a64997832e9bad13
-15	6119	7977210680708574	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-6120	6407	7977210741771802	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+12	4741	7977684148113719	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+4741	4999	7977684195413305	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
 16	2412	7967231723990329	CMakeFiles/curves.dir/opengl/glad.c.obj	87105acca9c12116
 9	2203	7967244676538998	CMakeFiles/curves.dir/projects/curves/main.cpp.obj	ed11a05dd65d35ad
 2204	2580	7967244698544395	projects/curves/curves.exe	8f133b6cc7f48481
-31	972	7977630856905727	build.ninja	dace66de0ea1a6d0
-31	972	7977630856905727	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
-18	7364	7977630857772622	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-7365	7775	7977630931239655	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
-10	6293	7977636668257368	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-6294	6601	7977636731103937	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
-19	9938	7977674824950573	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-9939	10311	7977674924131845	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
-12	5365	7977675971195459	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-5366	5715	7977676024736946	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
-9	4354	7977682009704584	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-4355	4573	7977682053156797	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
-12	4741	7977684148113719	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
-4741	4999	7977684195413305	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+4	415	7977703281858473	build.ninja	dace66de0ea1a6d0
+4	415	7977703281858473	D:/Documents/3D graphics/build/cmake_install.cmake	dace66de0ea1a6d0
+12	4070	7977703282372239	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+4071	4347	7977703322952571	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+11	3689	7977703624963827	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+3690	3932	7977703661757917	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+9	3679	7977704564081709	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+3679	3896	7977704600793013	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+23	5382	7977709648666815	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+5384	5673	7977709702277083	projects/village_fair/village_fair.exe	b15e38ab1ac00e82
+10	6269	7977714817466786	CMakeFiles/village_fair.dir/projects/village_fair/main.cpp.obj	324f1a64fbb310d3
+6270	6615	7977714880070182	projects/village_fair/village_fair.exe	b15e38ab1ac00e82

@@ -115,7 +115,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     {
         lightingOn ^= true;
     }
-    if ((key == GLFW_KEY_0 && action == GLFW_PRESS))                   //Dark On/Off
+    if ((key == GLFW_KEY_MINUS && action == GLFW_PRESS))               //Dark On/Off (-)
     {
         dark ^= true;
         if (dark)
@@ -328,6 +328,44 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         /*cout << rotateAngleTest_Y << endl;*/
     }
 
+
+    // ---------- Texture Controls ----------
+
+    if (key == GLFW_KEY_8 && action == GLFW_PRESS)          //Cycle Texture Mode
+    {
+        g_textureMode = (g_textureMode + 1) % 4;
+        cout << "Texture Mode: " << g_texModeNames[g_textureMode] << endl;
+    }
+
+    if (key == GLFW_KEY_9 && action == GLFW_PRESS)          //Cycle Wrap Mode
+    {
+        g_wrapMode = (g_wrapMode + 1) % 4;
+        cout << "Wrap Mode: " << g_wrapModeNames[g_wrapMode] << endl;
+        unsigned int texIDs[] = { texture0, texture1, texture2, texture3, texture4,
+                                  texture5, texture6, texture7, texture8, texture9,
+                                  texture10, garden2, garden1, whiteflower, shoptex,
+                                  bambooTex, barkTex, leafTex, brickTex2, signTex };
+        for (unsigned int tid : texIDs) {
+            glBindTexture(GL_TEXTURE_2D, tid);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, g_glWrapModes[g_wrapMode]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, g_glWrapModes[g_wrapMode]);
+        }
+    }
+
+    if (key == GLFW_KEY_0 && action == GLFW_PRESS)          //Cycle Filter Mode
+    {
+        g_filterMode = (g_filterMode + 1) % 4;
+        cout << "Filter Mode: " << g_filterModeNames[g_filterMode] << endl;
+        unsigned int texIDs[] = { texture0, texture1, texture2, texture3, texture4,
+                                  texture5, texture6, texture7, texture8, texture9,
+                                  texture10, garden2, garden1, whiteflower, shoptex,
+                                  bambooTex, barkTex, leafTex, brickTex2, signTex };
+        for (unsigned int tid : texIDs) {
+            glBindTexture(GL_TEXTURE_2D, tid);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, g_glMinFilters[g_filterMode]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, g_glMagFilters[g_filterMode]);
+        }
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

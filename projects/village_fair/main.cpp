@@ -139,21 +139,21 @@ PointLight pointLight4(lightPositions[4], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm
 
 // Lamp post point lights (5-13) — bulb at local offset (0.23, 1.66, 0.0) from base
 // Warm white, moderate range for road lighting
-glm::vec4 lpAmb(0.15f, 0.14f, 0.10f, 1.0f);
-glm::vec4 lpDiff(1.0f, 0.95f, 0.70f, 1.0f);
+glm::vec4 lpAmb(0.25f, 0.22f, 0.15f, 1.0f);
+glm::vec4 lpDiff(1.2f, 1.1f, 0.80f, 1.0f);
 glm::vec4 lpSpec(0.6f, 0.6f, 0.5f, 1.0f);
 // Left road (X=-12): bases at z=5, -1, -7 → bulb offset (+0.23, +1.66, 0)
-PointLight pointLight5( glm::vec3(-11.77f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 5);
-PointLight pointLight6( glm::vec3(-11.77f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 6);
-PointLight pointLight7( glm::vec3(-11.77f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 7);
+PointLight pointLight5( glm::vec3(-11.77f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 5);
+PointLight pointLight6( glm::vec3(-11.77f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 6);
+PointLight pointLight7( glm::vec3(-11.77f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 7);
 // Right road (X=10): bases at z=5, -1, -7
-PointLight pointLight8( glm::vec3(10.23f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 8);
-PointLight pointLight9( glm::vec3(10.23f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 9);
-PointLight pointLight10(glm::vec3(10.23f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 10);
+PointLight pointLight8( glm::vec3(10.23f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 8);
+PointLight pointLight9( glm::vec3(10.23f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 9);
+PointLight pointLight10(glm::vec3(10.23f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 10);
 // Bottom road (Z=-11): bases at x=-6, 0, 6
-PointLight pointLight11(glm::vec3(-5.77f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 11);
-PointLight pointLight12(glm::vec3( 0.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 12);
-PointLight pointLight13(glm::vec3( 6.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.22f, 0.12f, 13);
+PointLight pointLight11(glm::vec3(-5.77f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 11);
+PointLight pointLight12(glm::vec3( 0.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 12);
+PointLight pointLight13(glm::vec3( 6.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 13);
 
 
 //***********************************Curve*******************
@@ -382,6 +382,16 @@ unsigned int itemChipsTex, itemPopcornTex, itemSlushyTex, itemTeddyTex, itemTedd
 unsigned int itemCottonPinkTex, itemCottonBlueTex;
 
 bool textureOn = false;
+int  g_textureMode = 3;     // 0=Off, 1=Pure, 2=Vertex, 3=Fragment (default)
+int  g_wrapMode    = 0;     // 0=Repeat, 1=MirroredRepeat, 2=ClampToEdge, 3=ClampToBorder
+int  g_filterMode  = 1;     // 0=Nearest, 1=Linear, 2=MipmapNearest, 3=MipmapLinear
+
+const char* g_texModeNames[]   = { "Off", "Pure", "Vertex", "Fragment" };
+const char* g_wrapModeNames[]  = { "Repeat", "MirroredRepeat", "ClampToEdge", "ClampToBorder" };
+const char* g_filterModeNames[]= { "Nearest", "Linear", "Nearest+Mipmap", "Linear+Mipmap" };
+const GLenum g_glWrapModes[]   = { GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER };
+const GLenum g_glMinFilters[]  = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR };
+const GLenum g_glMagFilters[]  = { GL_NEAREST, GL_LINEAR, GL_NEAREST, GL_LINEAR };
 // Skybox
 
 float skyboxVertices[] =
@@ -1162,6 +1172,9 @@ unsigned int canopyVAO = hollowBezier(
         // Emissive glow uniform
         ourShader.setBool("emissiveOn", emissiveOn);
         ourShader.setVec4("material.emissive", glm::vec4(0.0f));  // default off per-object
+
+        // Texture mode uniform
+        ourShader.setInt("textureMode", g_textureMode);
 
         // ── Fog uniforms (main shader) ─────────────────
         ourShader.setBool("fogEnabled", true);

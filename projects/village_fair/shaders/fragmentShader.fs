@@ -65,6 +65,7 @@ uniform vec3 viewPos;
 uniform bool lightingOn;
 uniform bool alphaTest;
 uniform bool emissiveOn;
+uniform int  textureMode;   // 0=Off, 1=Pure, 2=Vertex(=Fragment), 3=Fragment
 //uniform bool dark;
 
 // ── Fog ──────────────────────────────────────────────────────────
@@ -127,7 +128,20 @@ void main()
     vec4 texColor = texture(ourTexture, TexCoord);
     if (alphaTest && texColor.a < 0.15)
         discard;
-    vec4 pixelColor = texColor * result;
+
+    // Texture mode blending:
+    // 0 = Off       → material colors only (no texture)
+    // 1 = Pure      → texture color only (no lighting)
+    // 2 = Vertex    → same as Fragment (placeholder)
+    // 3 = Fragment  → texture × lighting (default)
+    vec4 pixelColor;
+    if (textureMode == 0) {
+        pixelColor = result;                   // material/lighting only
+    } else if (textureMode == 1) {
+        pixelColor = texColor;                 // texture only, no lighting
+    } else {
+        pixelColor = texColor * result;        // full texture × lighting
+    }
 
     // ── Linear fog blending ─────────────────────────────────────────
     if (fogEnabled) {
