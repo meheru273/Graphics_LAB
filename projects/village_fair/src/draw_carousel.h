@@ -120,7 +120,7 @@ void Carousal(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z)
     float baseHeight     = 0.15f;
     float columnRadius   = 0.30f;
     float columnHeight   = 4.0f;
-    float canopyRadius   = 3.5f;
+    float canopyRadius   = 2.8f;
     float canopyThick    = 0.12f;
     float canopyY        = groundY + columnHeight;
     float poleRadius     = 2.2f;     // ring where horses sit
@@ -245,7 +245,7 @@ void Carousal(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Z)
 
         glm::mat4 canopyM = spinBase
             * glm::translate(I, glm::vec3(cx, canopyY, cz))
-            * glm::scale(I, glm::vec3(3.5f, 0.8f, 3.5f));
+            * glm::scale(I, glm::vec3(2.8f, 0.8f, 2.8f));
         ourShader.setMat4("model", canopyM);
         glBindVertexArray(carousalVAO);
         glDrawElements(GL_TRIANGLES, (unsigned int)indicesCarousal.size(), GL_UNSIGNED_INT, 0);

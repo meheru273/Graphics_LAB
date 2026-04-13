@@ -28,6 +28,13 @@ void processInput(GLFWwindow* window)
         g_walkTimer += deltaTime * 8.0f;
     }
 
+    // ── Look up / down (pitch) ──
+    float lookSpeed = 60.0f * deltaTime;  // degrees per second
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        g_playerPitch = glm::min(g_playerPitch + lookSpeed, 89.0f);
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+        g_playerPitch = glm::max(g_playerPitch - lookSpeed, -89.0f);
+
     // ── Clamp player inside tent when in interior mode ──
     if (g_insideTent) {
         glm::vec2 offset(g_playerPos.x - g_tentCenter.x,
@@ -113,161 +120,33 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         dark ^= true;
         if (dark)
         {
-            pointLightOn[0] = 1.0;
-            pointLight1.turnOn();
-            pointLightOn[1] = 1.0;
-            pointLight2.turnOn();
-            pointLightOn[2] = 1.0;
-            pointLight3.turnOn();
-            pointLightOn[3] = 1.0;
-            pointLight4.turnOn();
+            for (int i = 0; i < noOfPointLights; ++i) pointLightOn[i] = 1.0;
+            pointLight1.turnOn(); pointLight2.turnOn();
+            pointLight3.turnOn(); pointLight4.turnOn();
+            pointLight5.turnOn(); pointLight6.turnOn();
+            pointLight7.turnOn(); pointLight8.turnOn();
+            pointLight9.turnOn(); pointLight10.turnOn();
+            pointLight11.turnOn(); pointLight12.turnOn();
+            pointLight13.turnOn();
             directionalLightOn = 0.0;
             directionalLight.turnOff();
         }
         else
         {
-            pointLightOn[0] = 0.0;
-            pointLight1.turnOff();
-            pointLightOn[1] = 0.0;
-            pointLight2.turnOff();
-            pointLightOn[2] = 0.0;
-            pointLight3.turnOff();
-            pointLightOn[3] = 0.0;
-            pointLight4.turnOff();
+            for (int i = 0; i < noOfPointLights; ++i) pointLightOn[i] = 0.0;
+            pointLight1.turnOff(); pointLight2.turnOff();
+            pointLight3.turnOff(); pointLight4.turnOff();
+            pointLight5.turnOff(); pointLight6.turnOff();
+            pointLight7.turnOff(); pointLight8.turnOff();
+            pointLight9.turnOff(); pointLight10.turnOff();
+            pointLight11.turnOff(); pointLight12.turnOff();
+            pointLight13.turnOff();
             directionalLightOn = 1.0;
             directionalLight.turnOn();
         }
     }
 
-    if (key == GLFW_KEY_7 && action == GLFW_PRESS)          //Ambient On/Off
-    {
-        if (ambientOn == 0.0)                   
-        {
-            ambientOn = 1.0;
-            pointLight1.turnAmbientOn();
-            pointLight2.turnAmbientOn();
-            pointLight3.turnAmbientOn();
-            pointLight4.turnAmbientOn();
-            spotLight.turnAmbientOn();
-            directionalLight.turnAmbientOn();
-        }
-        else
-        {
-            ambientOn = 0.0;
-            pointLight1.turnAmbientOff();
-            pointLight2.turnAmbientOff();
-            pointLight3.turnAmbientOff();
-            pointLight4.turnAmbientOff();
-            spotLight.turnAmbientOff();
-            directionalLight.turnAmbientOff();
-        }
-    }
-
-    if (key == GLFW_KEY_8 && action == GLFW_PRESS)          //Diffuse On/Off
-    {
-        if (diffuseOn == 0.0)
-        {
-            diffuseOn = 1.0;
-            pointLight1.turnDiffuseOn();
-            pointLight2.turnDiffuseOn();
-            pointLight3.turnDiffuseOn();
-            pointLight4.turnDiffuseOn();
-            spotLight.turnDiffuseOn();
-            directionalLight.turnDiffuseOn();
-        }
-        else
-        {
-            diffuseOn = 0.0;
-            pointLight1.turnDiffuseOff();
-            pointLight2.turnDiffuseOff();
-            pointLight3.turnDiffuseOff();
-            pointLight4.turnDiffuseOff();
-            spotLight.turnDiffuseOff();
-            directionalLight.turnDiffuseOff();
-        }
-    }
-
-    if (key == GLFW_KEY_9 && action == GLFW_PRESS)          //Specular On/Off
-    {
-        if (specularOn == 0.0)
-        {
-            specularOn = 1.0;
-            pointLight1.turnSpecularOn();
-            pointLight2.turnSpecularOn();
-            pointLight3.turnSpecularOn();
-            pointLight4.turnSpecularOn();
-            spotLight.turnSpecularOn();
-            directionalLight.turnSpecularOn();
-        }
-        else
-        {
-            specularOn = 0.0;
-            pointLight1.turnSpecularOff();
-            pointLight2.turnSpecularOff();
-            pointLight3.turnSpecularOff();
-            pointLight4.turnSpecularOff();
-            spotLight.turnSpecularOff();
-            directionalLight.turnSpecularOff();
-        }
-    }
-
-    if (key == GLFW_KEY_1 && action == GLFW_PRESS)          //Point Light 1 On/Off
-    {
-        if (pointLightOn[0] == 0.0)
-        {
-            pointLightOn[0] = 1.0;
-            pointLight1.turnOn();
-        }
-        else
-        {
-            pointLightOn[0] = 0.0;
-            pointLight1.turnOff();
-        }
-    }
-
-    if (key == GLFW_KEY_4 && action == GLFW_PRESS)          //Point Light 2 On/Off
-    {
-        if (pointLightOn[1] == 0.0)
-        {
-            pointLightOn[1] = 1.0;
-            pointLight2.turnOn();
-        }
-        else
-        {
-            pointLightOn[1] = 0.0;
-            pointLight2.turnOff();
-        }
-    }
-
-    if (key == GLFW_KEY_3 && action == GLFW_PRESS)          //Point Light 3 On/Off
-    {
-        if (pointLightOn[2] == 0.0)
-        {
-            pointLightOn[2] = 1.0;
-            pointLight3.turnOn();
-        }
-        else
-        {
-            pointLightOn[2] = 0.0;
-            pointLight3.turnOff();
-        }
-    }
-
-    if (key == GLFW_KEY_2 && action == GLFW_PRESS)          //Point Light 4 On/Off
-    {
-        if (pointLightOn[3] == 0.0)
-        {
-            pointLightOn[3] = 1.0;
-            pointLight4.turnOn();
-        }
-        else
-        {
-            pointLightOn[3] = 0.0;
-            pointLight4.turnOff();
-        }
-    }
-
-    if (key == GLFW_KEY_5 && action == GLFW_PRESS)          //Directional Light 1 On/Off
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)          //Directional Light On/Off
     {
         if (directionalLightOn == 0.0)
         {
@@ -281,7 +160,35 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
     }
 
-    if (key == GLFW_KEY_6 && action == GLFW_PRESS)          //Spot Light 1 On/Off
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)          //ALL Point Lights On/Off
+    {
+        // Toggle all 13 point lights at once
+        bool anyOn = false;
+        for (int i = 0; i < noOfPointLights; ++i)
+            if (pointLightOn[i] > 0.0f) { anyOn = true; break; }
+        float newVal = anyOn ? 0.0f : 1.0f;
+        for (int i = 0; i < noOfPointLights; ++i)
+            pointLightOn[i] = newVal;
+        if (anyOn) {
+            pointLight1.turnOff(); pointLight2.turnOff();
+            pointLight3.turnOff(); pointLight4.turnOff();
+            pointLight5.turnOff(); pointLight6.turnOff();
+            pointLight7.turnOff(); pointLight8.turnOff();
+            pointLight9.turnOff(); pointLight10.turnOff();
+            pointLight11.turnOff(); pointLight12.turnOff();
+            pointLight13.turnOff();
+        } else {
+            pointLight1.turnOn(); pointLight2.turnOn();
+            pointLight3.turnOn(); pointLight4.turnOn();
+            pointLight5.turnOn(); pointLight6.turnOn();
+            pointLight7.turnOn(); pointLight8.turnOn();
+            pointLight9.turnOn(); pointLight10.turnOn();
+            pointLight11.turnOn(); pointLight12.turnOn();
+            pointLight13.turnOn();
+        }
+    }
+
+    if (key == GLFW_KEY_3 && action == GLFW_PRESS)          //Spotlight (flashlight) On/Off
     {
         if (spotLightOn == 0.0)
         {
@@ -294,6 +201,102 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             spotLight.turnOff();
         }
     }
+
+    if (key == GLFW_KEY_4 && action == GLFW_PRESS)          //Emissive Glow On/Off
+    {
+        emissiveOn = !emissiveOn;
+    }
+
+    if (key == GLFW_KEY_5 && action == GLFW_PRESS)          //Ambient On/Off
+    {
+        if (ambientOn == 0.0)
+        {
+            ambientOn = 1.0;
+            pointLight1.turnAmbientOn(); pointLight2.turnAmbientOn();
+            pointLight3.turnAmbientOn(); pointLight4.turnAmbientOn();
+            pointLight5.turnAmbientOn(); pointLight6.turnAmbientOn();
+            pointLight7.turnAmbientOn(); pointLight8.turnAmbientOn();
+            pointLight9.turnAmbientOn(); pointLight10.turnAmbientOn();
+            pointLight11.turnAmbientOn(); pointLight12.turnAmbientOn();
+            pointLight13.turnAmbientOn();
+            spotLight.turnAmbientOn();
+            directionalLight.turnAmbientOn();
+        }
+        else
+        {
+            ambientOn = 0.0;
+            pointLight1.turnAmbientOff(); pointLight2.turnAmbientOff();
+            pointLight3.turnAmbientOff(); pointLight4.turnAmbientOff();
+            pointLight5.turnAmbientOff(); pointLight6.turnAmbientOff();
+            pointLight7.turnAmbientOff(); pointLight8.turnAmbientOff();
+            pointLight9.turnAmbientOff(); pointLight10.turnAmbientOff();
+            pointLight11.turnAmbientOff(); pointLight12.turnAmbientOff();
+            pointLight13.turnAmbientOff();
+            spotLight.turnAmbientOff();
+            directionalLight.turnAmbientOff();
+        }
+    }
+
+    if (key == GLFW_KEY_6 && action == GLFW_PRESS)          //Diffuse On/Off
+    {
+        if (diffuseOn == 0.0)
+        {
+            diffuseOn = 1.0;
+            pointLight1.turnDiffuseOn(); pointLight2.turnDiffuseOn();
+            pointLight3.turnDiffuseOn(); pointLight4.turnDiffuseOn();
+            pointLight5.turnDiffuseOn(); pointLight6.turnDiffuseOn();
+            pointLight7.turnDiffuseOn(); pointLight8.turnDiffuseOn();
+            pointLight9.turnDiffuseOn(); pointLight10.turnDiffuseOn();
+            pointLight11.turnDiffuseOn(); pointLight12.turnDiffuseOn();
+            pointLight13.turnDiffuseOn();
+            spotLight.turnDiffuseOn();
+            directionalLight.turnDiffuseOn();
+        }
+        else
+        {
+            diffuseOn = 0.0;
+            pointLight1.turnDiffuseOff(); pointLight2.turnDiffuseOff();
+            pointLight3.turnDiffuseOff(); pointLight4.turnDiffuseOff();
+            pointLight5.turnDiffuseOff(); pointLight6.turnDiffuseOff();
+            pointLight7.turnDiffuseOff(); pointLight8.turnDiffuseOff();
+            pointLight9.turnDiffuseOff(); pointLight10.turnDiffuseOff();
+            pointLight11.turnDiffuseOff(); pointLight12.turnDiffuseOff();
+            pointLight13.turnDiffuseOff();
+            spotLight.turnDiffuseOff();
+            directionalLight.turnDiffuseOff();
+        }
+    }
+
+    if (key == GLFW_KEY_7 && action == GLFW_PRESS)          //Specular On/Off
+    {
+        if (specularOn == 0.0)
+        {
+            specularOn = 1.0;
+            pointLight1.turnSpecularOn(); pointLight2.turnSpecularOn();
+            pointLight3.turnSpecularOn(); pointLight4.turnSpecularOn();
+            pointLight5.turnSpecularOn(); pointLight6.turnSpecularOn();
+            pointLight7.turnSpecularOn(); pointLight8.turnSpecularOn();
+            pointLight9.turnSpecularOn(); pointLight10.turnSpecularOn();
+            pointLight11.turnSpecularOn(); pointLight12.turnSpecularOn();
+            pointLight13.turnSpecularOn();
+            spotLight.turnSpecularOn();
+            directionalLight.turnSpecularOn();
+        }
+        else
+        {
+            specularOn = 0.0;
+            pointLight1.turnSpecularOff(); pointLight2.turnSpecularOff();
+            pointLight3.turnSpecularOff(); pointLight4.turnSpecularOff();
+            pointLight5.turnSpecularOff(); pointLight6.turnSpecularOff();
+            pointLight7.turnSpecularOff(); pointLight8.turnSpecularOff();
+            pointLight9.turnSpecularOff(); pointLight10.turnSpecularOff();
+            pointLight11.turnSpecularOff(); pointLight12.turnSpecularOff();
+            pointLight13.turnSpecularOff();
+            spotLight.turnSpecularOff();
+            directionalLight.turnSpecularOff();
+        }
+    }
+
     if (key == GLFW_KEY_P && action == GLFW_PRESS)                   //Ferris Wheel On/Off
     {
         isFerrisWheelOn ^= true;

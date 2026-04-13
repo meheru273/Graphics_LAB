@@ -6,6 +6,7 @@ struct Material {
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
+    vec4 emissive;
     float shininess;
 };
 
@@ -63,6 +64,7 @@ uniform vec3 viewPos;
 
 uniform bool lightingOn;
 uniform bool alphaTest;
+uniform bool emissiveOn;
 //uniform bool dark;
 
 // ── Fog ──────────────────────────────────────────────────────────
@@ -108,6 +110,10 @@ void main()
             circusL += CalcSpotLight(material, circusSpotLights[i], Normal, FragPos);
 
     vec4 result = dirL + pointL + spotL + circusL;
+
+    // Emissive glow — self-illumination, independent of lights
+    if (emissiveOn)
+        result += material.emissive;
 
     if(!lightingOn)
     {

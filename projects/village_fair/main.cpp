@@ -296,6 +296,7 @@ bool lightingOn = true;
 float ambientOn = 1.0;
 float diffuseOn = 1.0;
 float specularOn = 1.0;
+bool emissiveOn = true;
 bool dark = false;
 
 float directionalLightOn = 1.0;
@@ -1005,14 +1006,17 @@ unsigned int canopyVAO = hollowBezier(
             camera.Position = fpvPos;
         } else {
             // Chase camera: behind and above the player with lerp smoothing
-            float chaseDist   = 3.5f;
-            float chaseHeight = 1.8f;
+            // Inside tent: pull camera much closer so it stays within the walls
+            float chaseDist   = g_insideTent ? 1.2f : 3.5f;
+            float chaseHeight = g_insideTent ? 0.6f : 1.8f;
             glm::vec3 flatFront(cos(yawR), 0.0f, sin(yawR));
             glm::vec3 desiredPos = eyePos - flatFront * chaseDist + glm::vec3(0.0f, chaseHeight, 0.0f);
             // Smooth follow (lerp)
             float t = 1.0f - expf(-g_chaseSmoothSpeed * deltaTime);
             g_chaseCamPos = glm::mix(g_chaseCamPos, desiredPos, t);
-            view = glm::lookAt(g_chaseCamPos, eyePos + glm::vec3(0, 0.3f, 0), glm::vec3(0,1,0));
+            // LookAt target: ahead of player in their look direction (includes pitch)
+            glm::vec3 lookTarget = eyePos + playerFront * 3.0f;
+            view = glm::lookAt(g_chaseCamPos, lookTarget, glm::vec3(0,1,0));
             camera.Position = g_chaseCamPos;
         }
         camera.Front = playerFront;
@@ -1087,7 +1091,9 @@ unsigned int canopyVAO = hollowBezier(
         SetupPointLight(pointLight12, ourShader, 12);
         SetupPointLight(pointLight13, ourShader, 13);
 
-        //Setting up Spot Light
+        //Setting up Spot Light — follow camera as flashlight
+        spotLight.position = camera.Position;
+        spotLight.direction = camera.Front;
         spotLight.setUpLight(ourShader);
         if (!spotLightOn)
             spotLight.turnOff();
@@ -1152,6 +1158,10 @@ unsigned int canopyVAO = hollowBezier(
         //Setting up Camera and Others
         ourShader.setVec3("viewPos", camera.Position);
         ourShader.setBool("lightingOn", lightingOn);
+
+        // Emissive glow uniform
+        ourShader.setBool("emissiveOn", emissiveOn);
+        ourShader.setVec4("material.emissive", glm::vec4(0.0f));  // default off per-object
 
         // ── Fog uniforms (main shader) ─────────────────
         ourShader.setBool("fogEnabled", true);
@@ -1344,7 +1354,7 @@ unsigned int canopyVAO = hollowBezier(
 
         // Ferris Wheel — Cell (2,2) Bottom-Right, world center (+5, -4)
         // Internal center: (3, 2, 11.5) → offset: (5-3, 0, -4-11.5)
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, 0.0f, -15.5f));
+        translateMatrix = glm::translate(identityMatrix, glm::vec3(2.0f, 0.0f, -17.5f));
         FerrisWheel(ourShader, translateMatrix);
 
         // ================================================================
