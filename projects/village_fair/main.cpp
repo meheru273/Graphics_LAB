@@ -50,7 +50,6 @@ unsigned int loadTexture(char const* path, GLenum textureWrappingModeS, GLenum t
 void SetupPointLight(PointLight &pointLight, Shader ourShader, int lightNum);
 void Stage(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y = 0);
 void FoodPlace(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y = 0);
-void TableChairSet(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y = 0);
 void read_file(string file_name, vector<float> &vec);
 long long nCr(int n, int r);
 void BezierCurve(double t, float xy[2], GLfloat ctrlpoints[], int L);
@@ -1393,10 +1392,7 @@ unsigned int canopyVAO = hollowBezier(
         // ================================================================
         //  BENCHES & CHAIRS — top corners flanking pond
         // ================================================================
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(-10.0f, -0.6f, 10.0f));
-        seat(ourShader, translateMatrix);
-        translateMatrix = glm::translate(identityMatrix, glm::vec3(8.0f, -0.6f, 10.0f));
-        seat(ourShader, translateMatrix);
+        // (Chairs moved into drawUmbrella)
 
         // ================================================================
         //  LAMP POSTS — along inner edges of roads
@@ -1574,7 +1570,7 @@ unsigned int canopyVAO = hollowBezier(
         projection1 = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         skyboxShader.setMat4("view", view1);
 
-        // Horizon fog � haze the base of the skybox to blend with scene fog
+        // Horizon fog � haze the base of the skybox to blend with scene fog
         skyboxShader.setBool("horizonFogEnabled", true);
         skyboxShader.setVec3("horizonFogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
                                                      : glm::vec3(0.62f, 0.72f, 0.78f));

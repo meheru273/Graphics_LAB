@@ -253,10 +253,11 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
     float gateZ = BND_ZMIN;
     float pillarX_L = GATE_CENTER_X - GATE_HALF_W;
     float pillarX_R = GATE_CENTER_X + GATE_HALF_W;
-    float pillarH   = 3.2f;
-    float pillarW   = 0.35f;
+    float pillarH   = 3.5f;
+    float pillarW   = 0.40f;
+    float groundDip = 0.15f;
 
-    // ── Two tall gate pillars ────────────────────────────────────
+    // -- Two tall gate pillars (grounded, flush with fence) --
     glBindTexture(GL_TEXTURE_2D, woodTex);
     glm::vec4 pillarColor(0.38f, 0.22f, 0.08f, 1.0f);
     shader.setVec4("material.ambient",  pillarColor * 0.45f);
@@ -264,23 +265,23 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
     shader.setVec4("material.specular", glm::vec4(0.15f, 0.10f, 0.06f, 1.0f));
     shader.setFloat("material.shininess", 20.0f);
 
-    // Left pillar
-    glm::mat4 T = glm::translate(I, glm::vec3(pillarX_L - pillarW*0.5f, BND_Y, gateZ - pillarW*0.5f));
-    glm::mat4 S = glm::scale(I, glm::vec3(pillarW/0.5f, pillarH/0.5f, pillarW/0.5f));
+    float pStartY = BND_Y - groundDip;
+    float pFullH  = pillarH + groundDip;
+    glm::mat4 T = glm::translate(I, glm::vec3(pillarX_L - pillarW*0.5f, pStartY, gateZ - pillarW*0.5f));
+    glm::mat4 S = glm::scale(I, glm::vec3(pillarW/0.5f, pFullH/0.5f, pillarW/0.5f));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Right pillar
-    T = glm::translate(I, glm::vec3(pillarX_R - pillarW*0.5f, BND_Y, gateZ - pillarW*0.5f));
+    T = glm::translate(I, glm::vec3(pillarX_R - pillarW*0.5f, pStartY, gateZ - pillarW*0.5f));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // Pillar caps (decorative top)
+    // Pillar caps
     glm::vec4 capCol = pillarColor * 0.65f;
     shader.setVec4("material.ambient",  capCol * 0.5f);
     shader.setVec4("material.diffuse",  capCol);
     float capW = pillarW * 1.4f;
-    S = glm::scale(I, glm::vec3(capW/0.5f, 0.12f/0.5f, capW/0.5f));
+    S = glm::scale(I, glm::vec3(capW/0.5f, 0.14f/0.5f, capW/0.5f));
     T = glm::translate(I, glm::vec3(pillarX_L - capW*0.5f, BND_Y + pillarH, gateZ - capW*0.5f));
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -288,16 +289,15 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
     shader.setMat4("model", moveMatrix * T * S);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // ── Rainbow arch (series of rotated cubes forming an arc) ────
-    const int ARCH_SEGS = 16;
+    // -- Smooth rainbow arch (32 segments) --
+    const int ARCH_SEGS = 32;
     float archSpan = pillarX_R - pillarX_L;
     float archRadius = archSpan * 0.5f;
     float archCenterX = GATE_CENTER_X;
     float archBaseY = BND_Y + pillarH - 0.1f;
-    float archThick = 0.22f;
-    float archDepth = 0.35f;
+    float archThick = 0.20f;
+    float archDepth = 0.38f;
 
-    // Rainbow colors for a festive look
     glm::vec4 archColors[7] = {
         glm::vec4(0.95f, 0.15f, 0.10f, 1.0f),
         glm::vec4(0.95f, 0.55f, 0.05f, 1.0f),
@@ -313,12 +313,10 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
         float a0 = 3.14159265f * i / ARCH_SEGS;
         float a1 = 3.14159265f * (i+1) / ARCH_SEGS;
         float aMid = (a0 + a1) * 0.5f;
-
         float cx = archCenterX - archRadius * cosf(aMid);
         float cy = archBaseY + archRadius * sinf(aMid);
-
-        float segW = archRadius * 3.14159265f / ARCH_SEGS * 1.05f;
-        float rot = aMid - 1.5707963f; // rotate segment to follow arc
+        float segW = archRadius * 3.14159265f / ARCH_SEGS * 1.08f;
+        float rot = aMid - 1.5707963f;
 
         glm::vec4 col = archColors[i % 7];
         shader.setVec4("material.ambient",  col * 0.5f);
@@ -334,23 +332,18 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     }
 
-    // ── "Village Fair" sign board on the arch ─────────────────────
-    // Use a custom quad with proper 0-1 UV mapping (cubeVAO has no UVs)
+    // -- "Village Fair" sign (flipped U for correct text, z-offset, mipmaps) --
     static unsigned int signVAO = 0, signVBO = 0;
     if (signVAO == 0) {
-        // Two triangles forming a quad, facing -Z (toward viewer outside)
-        // Format: posX, posY, posZ, normX, normY, normZ, u, v
         float sv[] = {
-            // Triangle 1
-            0.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,  // bottom-left
-            1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,  // bottom-right
-            1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,  // top-right
-            // Triangle 2
-            0.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,  // bottom-left
-            1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,  // top-right
-            0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,  // top-left
-
-            // Back face (facing +Z, visible from inside)
+            // Front face (-Z) with flipped U coords for correct text
+            0.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
+            0.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
+            0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
+            // Back face (+Z) normal UVs
             1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
             0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
             0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
@@ -377,9 +370,11 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
     glBindTexture(GL_TEXTURE_2D, signTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     shader.setBool("textureOn", true);
-
     glm::vec4 signCol(1.0f, 1.0f, 1.0f, 1.0f);
     shader.setVec4("material.ambient",  signCol * 0.9f);
     shader.setVec4("material.diffuse",  signCol);
@@ -389,59 +384,54 @@ static void _drawEntranceGate(Shader& shader, glm::mat4 moveMatrix,
     float signW = archSpan * 0.80f;
     float signH = 0.75f;
     float signY = archBaseY + archRadius * 0.45f;
-    // Position the quad: translate to bottom-left corner, then scale to signW x signH
-    T = glm::translate(I, glm::vec3(archCenterX - signW*0.5f, signY, gateZ - 0.03f));
+    T = glm::translate(I, glm::vec3(archCenterX - signW*0.5f, signY, gateZ - 0.06f));
     S = glm::scale(I, glm::vec3(signW, signH, 1.0f));
     shader.setMat4("model", moveMatrix * T * S);
-
     glBindVertexArray(signVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 12);  // 2 faces x 2 triangles x 3 verts
+    glDrawArrays(GL_TRIANGLES, 0, 12);
     glBindVertexArray(0);
 
-    // Restore texture state
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     shader.setBool("textureOn", textureOn);
     glBindVertexArray(cubeVAO);
 
-    // ── Animated marquee lights along the arch ───────────────────
-    glBindTexture(GL_TEXTURE_2D, woodTex);  // plain texture for lights
+    // -- Animated marquee lights (colorful emissive bulbs) --
     glBindVertexArray(sphereVAO);
+    glm::vec4 bulbColors[7] = {
+        glm::vec4(1.0f, 0.25f, 0.20f, 1.0f),
+        glm::vec4(1.0f, 0.65f, 0.10f, 1.0f),
+        glm::vec4(1.0f, 0.95f, 0.15f, 1.0f),
+        glm::vec4(0.20f, 0.90f, 0.35f, 1.0f),
+        glm::vec4(0.15f, 0.55f, 1.0f, 1.0f),
+        glm::vec4(0.50f, 0.20f, 0.90f, 1.0f),
+        glm::vec4(1.0f, 0.35f, 0.75f, 1.0f),
+    };
+    float spd = 3.0f;
+    int   phase = (int)(time * spd);
+    const int BULB_COUNT = 24;
 
-    float speed = 3.0f;
-    int   phase = (int)(time * speed);
-
-    for (int i = 0; i <= ARCH_SEGS; ++i) {
-        float a = 3.14159265f * i / ARCH_SEGS;
-        float lx = archCenterX - (archRadius + 0.2f) * cosf(a);
-        float ly = archBaseY + (archRadius + 0.2f) * sinf(a);
-
-        // Alternating blink pattern: even/odd toggle
-        bool isOn = ((i + phase) % 2 == 0);
-        glm::vec4 bulbOn(1.0f, 0.90f, 0.45f, 1.0f);   // warm white
-        glm::vec4 bulbOff(0.25f, 0.22f, 0.15f, 1.0f);  // dim
-        glm::vec4 bulb = isOn ? bulbOn : bulbOff;
-
-        // Draw as emissive (no lighting influence)
-        shader.setBool("lightingOn", false);
+    shader.setBool("lightingOn", false);
+    for (int i = 0; i <= BULB_COUNT; ++i) {
+        float a = 3.14159265f * i / BULB_COUNT;
+        float lx = archCenterX - (archRadius + 0.25f) * cosf(a);
+        float ly = archBaseY + (archRadius + 0.25f) * sinf(a);
+        bool isOn = ((i + phase) % 3 != 0);
+        glm::vec4 col = bulbColors[i % 7];
+        glm::vec4 bulb = isOn ? col : col * 0.2f;
         shader.setVec4("material.ambient",  bulb);
         shader.setVec4("material.diffuse",  bulb);
         shader.setVec4("material.specular", glm::vec4(0.0f));
         shader.setFloat("material.shininess", 1.0f);
-
-        glm::mat4 M = glm::translate(I, glm::vec3(lx, ly, gateZ - 0.1f))
-                     * glm::scale(I, glm::vec3(0.07f));
+        glm::mat4 M = glm::translate(I, glm::vec3(lx, ly, gateZ - 0.12f))
+                     * glm::scale(I, glm::vec3(0.065f));
         shader.setMat4("model", moveMatrix * M);
         glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
     }
-
-    // Restore lighting
     shader.setBool("lightingOn", lightingOn);
     glBindVertexArray(0);
 }
 
-// ──────────────────────────────────────────────────────────────
-//  PUBLIC: Draw entire fence perimeter + entrance gate
 // ──────────────────────────────────────────────────────────────
 void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix,
                        unsigned int woodTex, unsigned int plainTex,
@@ -477,4 +467,37 @@ void drawFenceBoundary(Shader& shader, glm::mat4 moveMatrix,
 
     // Entrance gate with arch, sign, and marquee lights
     _drawEntranceGate(shader, moveMatrix, woodTex, signTex, time);
+
+    // -- Bunting in the gate gaps (fence post <-> gate pillar) --
+    {
+        float gateZ     = BND_ZMIN;
+        float pillarX_L = GATE_CENTER_X - GATE_HALF_W;
+        float pillarX_R = GATE_CENTER_X + GATE_HALF_W;
+        float skipMin   = GATE_CENTER_X - GATE_HALF_W - 0.3f;
+        float skipMax   = GATE_CENTER_X + GATE_HALF_W + 0.3f;
+
+        // Find nearest post to the LEFT of gap and nearest to the RIGHT of gap
+        float edgeLen = BND_XMAX - BND_XMIN;
+        int numPosts = (int)(edgeLen / POST_SPACING) + 1;
+        float lastBeforeGate = BND_XMIN;  // rightmost post <= skipMin
+        float firstAfterGate = BND_XMAX;  // leftmost post >= skipMax
+        for (int i = 0; i <= numPosts; ++i) {
+            float px = BND_XMIN + edgeLen * (float)i / numPosts;
+            if (px <= skipMin) lastBeforeGate = px;          // keep updating
+            if (px >= skipMax && px < firstAfterGate)
+                firstAfterGate = px;                         // first match, keep smallest
+        }
+
+        float ropeHeights[3] = { ROPE_Y_TOP, ROPE_Y_TOP * 0.62f, ROPE_Y_TOP * 0.30f };
+        for (int h = 0; h < 3; ++h) {
+            // Left gap: last fence post -> left gate pillar
+            _drawRopeAndFlags(shader, moveMatrix,
+                              lastBeforeGate, gateZ, pillarX_L, gateZ,
+                              plainTex, ropeHeights[h]);
+            // Right gap: right gate pillar -> first fence post
+            _drawRopeAndFlags(shader, moveMatrix,
+                              pillarX_R, gateZ, firstAfterGate, gateZ,
+                              plainTex, ropeHeights[h]);
+        }
+    }
 }

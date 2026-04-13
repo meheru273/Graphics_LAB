@@ -1154,15 +1154,9 @@ void FoodPlace(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
     translateMatrix = glm::translate(identityMatrix, glm::vec3(-1.0f, 0.0f, 4.0f));
     Stage(ourShader, moveMatrix * translateMatrix, 90);
 
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, -10.0f));
-    TableChairSet(ourShader, moveMatrix * translateMatrix, rotateAngleTest_Y);
-
-    translateMatrix = glm::translate(identityMatrix, glm::vec3(0.0f, 0.0f, -8.0f));
-    TableChairSet(ourShader, moveMatrix * translateMatrix, rotateAngleTest_Y);
 
 
-}
 
-void TableChairSet(Shader ourShader, glm::mat4 moveMatrix, float rotateAngleTest_Y)
-{
+
+
 }
