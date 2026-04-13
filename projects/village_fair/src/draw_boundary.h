@@ -11,7 +11,7 @@
 //  Boundary rectangle (matches camera clamp in callbacks.h)
 // ──────────────────────────────────────────────────────────────
 static const float BND_XMIN = -20.0f, BND_XMAX = 18.0f;
-static const float BND_ZMIN = -19.0f, BND_ZMAX = 15.0f;
+static const float BND_ZMIN = -19.0f, BND_ZMAX = 25.0f;
 static const float BND_Y    = -0.42f;  // ground level
 
 // Gate location: bottom-left corner (near circus tent)

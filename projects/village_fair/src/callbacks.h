@@ -24,18 +24,23 @@ void processInput(GLFWwindow* window)
 
     if (g_playerMoving) {
         moveDir = glm::normalize(moveDir) * playerSpeed;
-        g_playerPos += moveDir;
+        // AABB collision: slide along walls instead of passing through
+        if (!g_insideTent) {
+            g_playerPos = moveWithCollision(g_playerPos, moveDir);
+        } else {
+            g_playerPos += moveDir;  // inside tent uses radial clamp below
+        }
         g_walkTimer += deltaTime * 8.0f;
     }
 
-    // ── Look up / down (pitch) ──
+    // -- Look up / down (pitch) --
     float lookSpeed = 60.0f * deltaTime;  // degrees per second
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
         g_playerPitch = glm::min(g_playerPitch + lookSpeed, 89.0f);
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
         g_playerPitch = glm::max(g_playerPitch - lookSpeed, -89.0f);
 
-    // ── Clamp player inside tent when in interior mode ──
+    // -- Clamp player inside tent when in interior mode --
     if (g_insideTent) {
         glm::vec2 offset(g_playerPos.x - g_tentCenter.x,
                          g_playerPos.z - g_tentCenter.z);
@@ -45,16 +50,6 @@ void processInput(GLFWwindow* window)
             g_playerPos.x = g_tentCenter.x + offset.x;
             g_playerPos.z = g_tentCenter.z + offset.y;
         }
-    }
-
-    // ── Clamp player to extended boundary ──
-    if (!g_insideTent) {
-        const float X_MIN = -30.0f, X_MAX = 28.0f;
-        const float Z_MIN = -29.0f, Z_MAX = 25.0f;
-        if (g_playerPos.x < X_MIN) g_playerPos.x = X_MIN;
-        if (g_playerPos.x > X_MAX) g_playerPos.x = X_MAX;
-        if (g_playerPos.z < Z_MIN) g_playerPos.z = Z_MIN;
-        if (g_playerPos.z > Z_MAX) g_playerPos.z = Z_MAX;
     }
 }
 
@@ -202,9 +197,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
     }
 
-    if (key == GLFW_KEY_4 && action == GLFW_PRESS)          //Emissive Glow On/Off
+    if (key == GLFW_KEY_4 && action == GLFW_PRESS)          //Lamppost Point Lights On/Off
     {
-        emissiveOn = !emissiveOn;
+        bool lampOn = (pointLightOn[4] > 0.0f);
+        float newVal = lampOn ? 0.0f : 1.0f;
+        for (int i = 4; i < noOfPointLights; ++i) pointLightOn[i] = newVal;
+        if (lampOn) {
+            pointLight5.turnOff();  pointLight6.turnOff();  pointLight7.turnOff();
+            pointLight8.turnOff();  pointLight9.turnOff();  pointLight10.turnOff();
+            pointLight11.turnOff(); pointLight12.turnOff(); pointLight13.turnOff();
+            cout << "Lamppost lights OFF" << endl;
+        } else {
+            pointLight5.turnOn();  pointLight6.turnOn();  pointLight7.turnOn();
+            pointLight8.turnOn();  pointLight9.turnOn();  pointLight10.turnOn();
+            pointLight11.turnOn(); pointLight12.turnOn(); pointLight13.turnOn();
+            cout << "Lamppost lights ON" << endl;
+        }
     }
 
     if (key == GLFW_KEY_5 && action == GLFW_PRESS)          //Ambient On/Off

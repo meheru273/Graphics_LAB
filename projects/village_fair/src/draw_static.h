@@ -93,9 +93,9 @@ void Floor (Shader ourShader, glm::mat4 moveMatrix, glm::vec4 color)
     glm::mat4 identityMatrix = glm::mat4(1.0f);
     glm::mat4 translateMatrix, scaleMatrix, model;
 
-    // Compacted compound: X from -3 to 36 (width=39), Z from -16 to 16 (depth=32)
+    // Compacted compound: X from -3 to 36 (width=39), Z from -16 to 26 (depth=42, expanded for pond area)
     translateMatrix = glm::translate(identityMatrix, glm::vec3(-3.0f, 1.7f, -18.0f));
-    scaleMatrix = glm::scale(identityMatrix, glm::vec3(78.0f, 0.1f, 64.0f));
+    scaleMatrix = glm::scale(identityMatrix, glm::vec3(78.0f, 0.1f, 84.0f));
     model = translateMatrix * scaleMatrix;
     ourShader.setMat4("model", moveMatrix * model);
     ourShader.setVec4("material.ambient", color);

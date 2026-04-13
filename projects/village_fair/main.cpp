@@ -17,6 +17,7 @@
 #include "MiniBanyanForest.h"
 #include "CircusTent.h"
 #include "lamppost.h"
+#include "collision.h"
 #include "stb_image.h"
 
 #include <iostream>
@@ -139,21 +140,21 @@ PointLight pointLight4(lightPositions[4], glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm
 
 // Lamp post point lights (5-13) — bulb at local offset (0.23, 1.66, 0.0) from base
 // Warm white, moderate range for road lighting
-glm::vec4 lpAmb(0.25f, 0.22f, 0.15f, 1.0f);
-glm::vec4 lpDiff(1.2f, 1.1f, 0.80f, 1.0f);
+glm::vec4 lpAmb(0.03f, 0.03f, 0.02f, 1.0f);
+glm::vec4 lpDiff(2.5f, 2.2f, 1.5f, 1.0f);
 glm::vec4 lpSpec(0.6f, 0.6f, 0.5f, 1.0f);
 // Left road (X=-12): bases at z=5, -1, -7 → bulb offset (+0.23, +1.66, 0)
-PointLight pointLight5( glm::vec3(-11.77f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 5);
-PointLight pointLight6( glm::vec3(-11.77f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 6);
-PointLight pointLight7( glm::vec3(-11.77f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 7);
+PointLight pointLight5( glm::vec3(-11.77f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 5);
+PointLight pointLight6( glm::vec3(-11.77f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 6);
+PointLight pointLight7( glm::vec3(-11.77f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 7);
 // Right road (X=10): bases at z=5, -1, -7
-PointLight pointLight8( glm::vec3(10.23f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 8);
-PointLight pointLight9( glm::vec3(10.23f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 9);
-PointLight pointLight10(glm::vec3(10.23f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 10);
+PointLight pointLight8( glm::vec3(10.23f, 1.24f,  5.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 8);
+PointLight pointLight9( glm::vec3(10.23f, 1.24f, -1.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 9);
+PointLight pointLight10(glm::vec3(10.23f, 1.24f, -7.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 10);
 // Bottom road (Z=-11): bases at x=-6, 0, 6
-PointLight pointLight11(glm::vec3(-5.77f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 11);
-PointLight pointLight12(glm::vec3( 0.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 12);
-PointLight pointLight13(glm::vec3( 6.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.09f, 0.032f, 13);
+PointLight pointLight11(glm::vec3(-5.77f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 11);
+PointLight pointLight12(glm::vec3( 0.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 12);
+PointLight pointLight13(glm::vec3( 6.23f, 1.24f, -11.0f), lpAmb, lpDiff, lpSpec, 1.0f, 0.70f, 0.50f, 13);
 
 
 //***********************************Curve*******************
@@ -958,6 +959,9 @@ unsigned int canopyVAO = hollowBezier(
     // render loop
     // -----------
     initPondShip(); // Initialize the bezier pond + pirate ship mesh
+    // Initialize AABB collision boxes for world objects
+    initWorldColliders();
+
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -1179,7 +1183,7 @@ unsigned int canopyVAO = hollowBezier(
         // ── Fog uniforms (main shader) ─────────────────
         ourShader.setBool("fogEnabled", true);
         ourShader.setVec3("fogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
-                                           : glm::vec3(0.55f, 0.70f, 0.85f));
+                                           : glm::vec3(0.62f, 0.72f, 0.78f));
         ourShader.setFloat("fogStart", 60.0f);
         ourShader.setFloat("fogEnd",   250.0f);
 
@@ -1278,20 +1282,26 @@ unsigned int canopyVAO = hollowBezier(
             ourShader.setVec4("material.specular", glm::vec4(0.1f));
             ourShader.setFloat("material.shininess", 8.0f);
 
-            // LEFT road (along Z): X from -14 to -12, Z from -13 to +8
+            // LEFT road (along Z): X from -14 to -12, Z from -13 to +18
             translateMatrix = glm::translate(identityMatrix, glm::vec3(-14.0f, -0.41f, -13.0f));
-            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 42.0f));
+            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 48.0f));
             ourShader.setMat4("model", translateMatrix * scaleMatrix);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-            // RIGHT road (along Z): X from +10 to +12, Z from -13 to +8
+            // RIGHT road (along Z): X from +10 to +12, Z from -13 to +18
             translateMatrix = glm::translate(identityMatrix, glm::vec3(10.0f, -0.41f, -13.0f));
-            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 42.0f));
+            scaleMatrix = glm::scale(identityMatrix, glm::vec3(4.0f, 0.05f, 48.0f));
             ourShader.setMat4("model", translateMatrix * scaleMatrix);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
             // BOTTOM road (along X): Z from -13 to -11, X from -14 to +12
             translateMatrix = glm::translate(identityMatrix, glm::vec3(-14.0f, -0.41f, -13.0f));
+            scaleMatrix = glm::scale(identityMatrix, glm::vec3(52.0f, 0.05f, 4.0f));
+            ourShader.setMat4("model", translateMatrix * scaleMatrix);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+            // TOP road (along X): Z from +16 to +18, X from -14 to +12 (closes the square)
+            translateMatrix = glm::translate(identityMatrix, glm::vec3(-14.0f, -0.41f, 11.0f));
             scaleMatrix = glm::scale(identityMatrix, glm::vec3(52.0f, 0.05f, 4.0f));
             ourShader.setMat4("model", translateMatrix * scaleMatrix);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -1346,7 +1356,7 @@ unsigned int canopyVAO = hollowBezier(
         //  BANYAN TREE — Cell (1,1) Top-Left, center (-5, +5)
         // ================================================================
         {
-            const glm::vec3 banyanPos   = glm::vec3(-5.0f, -0.42f, 5.0f);
+            const glm::vec3 banyanPos   = glm::vec3(-4.0f, -0.42f, 7.0f);
             const float     banyanScale = 1.5f;
             glm::mat4 banyanModel =
                 glm::translate(identityMatrix, banyanPos) *
@@ -1375,7 +1385,7 @@ unsigned int canopyVAO = hollowBezier(
         // ================================================================
         {
             float currentTime = (float)glfwGetTime();
-            glm::mat4 pondMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -0.3f, 12.0f));
+            glm::mat4 pondMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -0.3f, 20.0f));
             drawPondShipScene(ourShader, pondMatrix, currentTime);
             glBindVertexArray(cubeVAO);
         }
@@ -1506,7 +1516,7 @@ unsigned int canopyVAO = hollowBezier(
             // Fog
             instancedShader.setBool("fogEnabled", true);
             instancedShader.setVec3("fogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
-                                                     : glm::vec3(0.55f, 0.70f, 0.85f));
+                                                     : glm::vec3(0.62f, 0.72f, 0.78f));
             instancedShader.setFloat("fogStart", 40.0f);
             instancedShader.setFloat("fogEnd",   180.0f);
 
@@ -1560,9 +1570,16 @@ unsigned int canopyVAO = hollowBezier(
         skyboxShader.use();
         glm::mat4 view1 = glm::mat4(1.0f);
         glm::mat4 projection1 = glm::mat4(1.0f);
-        view1 = glm::mat4(glm::mat3(camera.GetViewMatrix()));
-        projection1 = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        view1 = glm::mat4(glm::mat3(view));  // strip translation from scene view matrix
+        projection1 = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         skyboxShader.setMat4("view", view1);
+
+        // Horizon fog � haze the base of the skybox to blend with scene fog
+        skyboxShader.setBool("horizonFogEnabled", true);
+        skyboxShader.setVec3("horizonFogColor", dark ? glm::vec3(0.02f, 0.03f, 0.06f)
+                                                     : glm::vec3(0.62f, 0.72f, 0.78f));
+        skyboxShader.setFloat("horizonFogStart", 0.12f);  // Y where haze begins
+        skyboxShader.setFloat("horizonFogEnd",  -0.02f);  // Y where haze is fully opaque
         skyboxShader.setMat4("projection", projection1);
 
         glBindVertexArray(skyboxVAO);
