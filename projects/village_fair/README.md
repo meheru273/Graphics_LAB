@@ -1,38 +1,41 @@
 ## Village fair - A 3D OpenGL 3.3 Project
 It's a project based on the things we have learned in the Computer Graphics laboratory. \ 
 Visualization: 
-https://youtu.be/ihJCl6dCnvE  (Day)
-https://youtu.be/A1PSllA5yMs?si=G3Iho5tA66iMLLti (Night)
+
   
 Functions: 
 ~~~~~~~~~~~~~~~~~~~~ \   
-Movements:
+
+Camera & Movement:
 ----------------------------------- 
-Move (Forward, Backward, Left, Right): (W, S, A, D)   
-Move (Up, Down): (E, R) 
-Pitch (Up, Down): (X, C) 
-Yaw (Right, Left): (Y, U)
-Roll (Right, Left): (Z, Q) 
+Move (Forward, Backward, Left, Right): W, S, A, D
+Yaw & Pitch Look: Mouse Movement or R, F
+Zoom In / Out (FOV): Mouse Scroll Wheel
+Toggle Camera Mode (First-Person / Chase): V
+Toggle View (Exterior / Circus Tent Interior): T
+Free Mouse Cursor: Left Alt
 -----------------------------------
 
-Lighting: 
+Lighting & Texturing:
 ----------------------------------- 
-Day and Night Toggle: 0 
-Point Light 1 ON/OFF: 1  
-Point Light 2 ON/OFF: 2 
-Point Light 3 ON/OFF: 3 
-Point Light 4 ON/OFF: 4 
-Directional Light ON/OFF: 5 
-Spot Light ON/OFF: 6 
-Ambient ON/OFF: 7
-Diffuse ON/OFF: 8 
-Specular ON/OFF: 9 
+1: Directional Light (sun) on/off
+2: ALL 13 point lights on/off
+3: Spotlight (flashlight) on/off
+4: All 9 lamppost lights on/off
+5: Ambient component on/off
+6: Diffuse component on/off
+7: Specular component on/off
+8: Cycle Texture Mode
+9: Cycle Wrap Mode
+0: Cycle Filter Mode
 ----------------------------------- 
 
-Dynamic Objects: 
+Dynamic Animations & Objects:
 ----------------------------------- 
 Gate Open/Close: G 
-Ferris Wheel Start/Stop: V 
-Boat Start/Stop: B 
-GoRound Start/Stop: J 
------------------------------------     
+Ferris Wheel Start/Stop: P 
+Pirate Ship (Boat) Start/Stop: B 
+Carousel Go-Round Start/Stop: J 
+Circus Tent Doors Open/Close: N
+Toggle Circus Tent Spotlights: Left Mouse Click
+-----------------------------------

@@ -842,7 +842,7 @@ int main()
     load_texture(texture8, "textures/ballprint.png", GL_RGBA);
     load_texture(garden2, "textures/flower1.png", GL_RGBA);
     load_texture(garden1, "textures/flower2.png", GL_RGBA);
-    load_texture(whiteflower, "textures/white.png", GL_RGBA);
+    load_texture(whiteflower, "textures/white.jpg", GL_RGBA);
     load_texture(shoptex, "textures/shop.png", GL_RGBA);
     load_texture(bambooTex, "textures/bamboo.png", GL_RGBA);
     load_texture(barkTex,   "textures/bark.jpg",        GL_RGB);
